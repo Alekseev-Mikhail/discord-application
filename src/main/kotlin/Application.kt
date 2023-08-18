@@ -8,10 +8,11 @@ import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.util.*
 
-private val propertiesPath: String =
-    File(SlashCommandHandler::class.java.protectionDomain.codeSource.location.path).parentFile.absolutePath
+private val deployPath =
+    "${File(SlashCommandHandler::class.java.protectionDomain.codeSource.location.path).parentFile.absolutePath}/../../app.properties"
+private const val devPath = "src/main/resources/app.properties"
 private val properties =
-    Properties().apply { load(InputStreamReader(FileInputStream(getDevPath(propertiesPath)), "UTF-8")) }
+    Properties().apply { load(InputStreamReader(FileInputStream(devPath), "UTF-8")) }
 
 val token = getProperty("app.test1.token")
 
@@ -77,7 +78,3 @@ class Application {
 
 private fun getProperty(key: String): String =
     properties.getProperty(key) ?: throw NullPointerException("Nothing found: $key")
-
-private fun getDeployPath(path: String) = "$path/../../app.properties"
-
-private fun getDevPath(path: String) = "$path/../../distributions/app.properties"
