@@ -62,19 +62,19 @@ class Application {
         guild.audioManager.closeAudioConnection()
         currentChannel = null
     }
-
-    fun getGuild(event: SlashCommandInteractionEvent) =
-        event.guild ?: throw NullPointerException("Guild cannot be null")
-
-    fun getOption(event: SlashCommandInteractionEvent, name: String) =
-        event.getOption(name) ?: throw NullPointerException("Option cannot be null")
-
-    fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
-        val member = event.member ?: throw NullPointerException("Member cannot be null")
-        val voiceState = member.voiceState ?: throw NullPointerException("VoiceState cannot be null")
-        return voiceState.channel
-    }
 }
 
 private fun getProperty(key: String): String =
     properties.getProperty(key) ?: throw NullPointerException("Nothing found: $key")
+
+fun getGuild(event: SlashCommandInteractionEvent) =
+    event.guild ?: throw NullPointerException("Guild cannot be null")
+
+fun getOption(event: SlashCommandInteractionEvent, name: String) =
+    event.getOption(name) ?: throw NullPointerException("Option cannot be null")
+
+fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
+    val member = event.member ?: throw NullPointerException("Member cannot be null")
+    val voiceState = member.voiceState ?: throw NullPointerException("VoiceState cannot be null")
+    return voiceState.channel
+}

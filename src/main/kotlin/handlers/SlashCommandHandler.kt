@@ -5,6 +5,8 @@ import defchannelReplyDisable
 import defchannelReplyEnable
 import disconnectReply
 import disconnectReplyProblem
+import getGuild
+import getOption
 import infoReply
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -27,7 +29,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun connect(event: SlashCommandInteractionEvent): String {
-        val guild = application.getGuild(event)
+        val guild = getGuild(event)
         val option = event.getOption("channel")
 
         if (option != null) {
@@ -45,7 +47,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun disconnect(event: SlashCommandInteractionEvent): String {
-        val guild = application.getGuild(event)
+        val guild = getGuild(event)
         if (guild.audioManager.isConnected) {
             application.disconnectToChannel(guild)
             return disconnectReply
@@ -54,8 +56,8 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun defChannel(event: SlashCommandInteractionEvent): String {
-        val guild = application.getGuild(event)
-        val option = application.getOption(event, "channel")
+        val guild = getGuild(event)
+        val option = getOption(event, "channel")
         val index = option.asInt - 1
         if (index < -1 || index >= guild.voiceChannels.size) return replyProblemExist
         if (index == -1) {
