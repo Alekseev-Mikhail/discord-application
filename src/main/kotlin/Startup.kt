@@ -24,22 +24,22 @@ class Startup {
             .setMemberCachePolicy(VOICE)
             .addEventListeners(slashCommandHandler)
             .addEventListeners(dirtyEventHandler)
-            .setActivity(listening("/info"))
+            .setActivity(listening("/$infoName"))
             .build()
             .updateCommands()
             .addCommands(
-                slash("info", infoDescription),
+                slash(infoName, infoDescription),
 
-                slash("connect", connectDescription)
-                    .addOption(CHANNEL, "channel", optionChannel, false),
-                slash("disconnect", disconnectDescription),
-                slash("def-channel", defchannelDescription)
-                    .addOption(CHANNEL, "channel", optionChannel, false),
-                slash("afk-time", afkTimeDescription)
-                    .addOption(INTEGER, "time", optionTime, true),
+                slash(connectName, connectDescription)
+                    .addOption(CHANNEL, optionChannelName, optionChannelDescription, false),
+                slash(disconnectName, disconnectDescription),
+                slash(defchannelName, defchannelDescription)
+                    .addOption(CHANNEL, optionChannelName, optionChannelDescription, false),
+                slash(afkTimeName, afkTimeDescription)
+                    .addOption(INTEGER, optionTimeName, optionTimeDescription, true),
 
-                slash("afk-mode", afkModeDescription)
-                    .addOption(BOOLEAN, "value", optionValue, false)
+                slash(afkModeName, afkModeDescription)
+                    .addOption(BOOLEAN, optionValueName, optionValueDescription, false)
                     .setDefaultPermissions(enabledFor(ADMINISTRATOR)),
             )
             .queue()

@@ -24,29 +24,40 @@ private val properties =
 val token = getProperty("app.test1.token")
 
 val replyProblemType = getProperty("command.reply.problem.type")
-val optionChannel = getProperty("command.option.channel")
-val optionValue = getProperty("command.option.value")
-val optionTime = getProperty("command.option.time")
 
+val optionChannelName = getProperty("command.option.channel.name")
+val optionValueName = getProperty("command.option.value.name")
+val optionTimeName = getProperty("command.option.time.name")
+
+val optionChannelDescription = getProperty("command.option.channel.description")
+val optionValueDescription = getProperty("command.option.value.description")
+val optionTimeDescription = getProperty("command.option.time.description")
+
+val infoName = getProperty("command.info.name")
 val infoDescription = getProperty("command.info.description")
 val infoReply = getProperty("command.info.reply")
 
+val connectName = getProperty("command.connect.name")
 val connectDescription = getProperty("command.connect.description")
 val connectReply = getProperty("command.connect.reply")
 val connectReplyProblemAlready = getProperty("command.connect.reply.problem.already")
 val connectReplyProblemMemberout = getProperty("command.connect.reply.problem.memberout")
 
+val disconnectName = getProperty("command.disconnect.name")
 val disconnectDescription = getProperty("command.disconnect.description")
 val disconnectReply = getProperty("command.disconnect.reply")
 val disconnectReplyProblem = getProperty("command.disconnect.reply.problem")
 
+val defchannelName = getProperty("command.defchannel.name")
 val defchannelDescription = getProperty("command.defchannel.description")
 val defchannelReplyEnable = getProperty("command.defchannel.reply.enable")
 val defchannelReplyDisable = getProperty("command.defchannel.reply.disable")
 
+val afkTimeName = getProperty("command.afk.time.name")
 val afkTimeDescription = getProperty("command.afk.time.description")
 val afkTimeReply = getProperty("command.afk.time.reply")
 
+val afkModeName = getProperty("command.afk.mode.name")
 val afkModeDescription = getProperty("command.afk.mode.description")
 val afkModeReplyEnable = getProperty("command.afk.mode.reply.enable")
 val afkModeReplyDisable = getProperty("command.afk.mode.reply.disable")
