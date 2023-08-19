@@ -1,6 +1,9 @@
 package handlers
 
 import Application
+import afkModeReplyDisable
+import afkModeReplyEnable
+import afkTimeReply
 import defchannelReplyDisable
 import defchannelReplyEnable
 import disconnectReply
@@ -10,7 +13,8 @@ import getOption
 import infoReply
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import replyProblemExist
+import replyProblemType
+import kotlin.time.Duration.Companion.seconds
 
 class SlashCommandHandler(private val application: Application) : ListenerAdapter() {
 //    private val playerManager = DefaultAudioPlayerManager().apply { registerRemoteSources(this) }
@@ -25,6 +29,8 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
             "connect" -> reply(event, connect(event))
             "disconnect" -> reply(event, disconnect(event))
             "def-channel" -> reply(event, defChannel(event))
+            "afk-time" -> reply(event, afkTime(event))
+            "afk-mode" -> reply(event, afkMode(event))
         }
     }
 
@@ -33,41 +39,81 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
         val option = event.getOption("channel")
 
         if (option != null) {
-            val index = option.asInt - 1
-            if (index == -1) return application.connectToChannel(event)
-            if (index >= guild.voiceChannels.size || index < 0) return replyProblemExist
-            return application.connectToChannel(guild, guild.getVoiceChannelById(guild.voiceChannels[index].id))
+            val channel = option.asChannel
+            if (channel.type.isAudio) {
+                return application.connect(guild, channel.asAudioChannel())
+            }
+            return replyProblemType
         }
 
         if (application.defaultChannel != null) {
-            return application.connectToChannel(guild, application.defaultChannel)
+            return application.connect(guild, application.defaultChannel)
         }
 
-        return application.connectToChannel(event)
+        return application.connect(event)
     }
 
     private fun disconnect(event: SlashCommandInteractionEvent): String {
         val guild = getGuild(event)
         if (guild.audioManager.isConnected) {
-            application.disconnectToChannel(guild)
+            application.disconnect(guild)
             return disconnectReply
         }
         return disconnectReplyProblem
     }
 
     private fun defChannel(event: SlashCommandInteractionEvent): String {
-        val guild = getGuild(event)
-        val option = getOption(event, "channel")
-        val index = option.asInt - 1
-        if (index < -1 || index >= guild.voiceChannels.size) return replyProblemExist
-        if (index == -1) {
-            application.defaultChannel = null
-            return defchannelReplyDisable
+        val option = event.getOption("channel")
+
+        if (option != null) {
+            val channel = option.asChannel
+            if (channel.type.isAudio) {
+                application.defaultChannel = channel.asAudioChannel()
+                return defchannelReplyEnable
+            }
+            return replyProblemType
         }
-        application.defaultChannel = guild.voiceChannels[index]
-        return defchannelReplyEnable
+        application.defaultChannel = null
+        return defchannelReplyDisable
     }
 
+    private fun afkTime(event: SlashCommandInteractionEvent): String {
+        val time = getOption(event, "time").asInt
+        application.afkTime = time.seconds.inWholeMilliseconds
+        return afkTimeReply
+    }
+
+    private fun afkMode(event: SlashCommandInteractionEvent): String {
+        val option = event.getOption("value")
+
+        if (option != null) {
+            return when (option.asBoolean) {
+                true -> {
+                    application.afkMode = true
+                    application.afkMode(getGuild(event))
+                    afkModeReplyEnable
+                }
+
+                false -> {
+                    application.afkMode = false
+                    afkModeReplyDisable
+                }
+            }
+        }
+
+        return when (application.afkMode) {
+            true -> {
+                application.afkMode = false
+                afkModeReplyDisable
+            }
+
+            false -> {
+                application.afkMode = true
+                application.afkMode(getGuild(event))
+                afkModeReplyEnable
+            }
+        }
+    }
 //    private fun afk(event: SlashCommandInteractionEvent): String {
 //        val guild = event.guild ?: throw NullPointerException("Guild cannot be null in afk")
 //
@@ -276,6 +322,6 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //        }
 //    }
 
-    private fun reply(event: SlashCommandInteractionEvent, reply: String) =
-        event.reply(reply).setEphemeral(true).queue()
+    private fun reply(event: SlashCommandInteractionEvent, message: String) =
+        event.reply(message).setEphemeral(true).queue()
 }

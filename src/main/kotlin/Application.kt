@@ -1,4 +1,10 @@
 import handlers.SlashCommandHandler
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
@@ -6,7 +12,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
-import java.util.*
+import java.util.Properties
+import kotlin.time.Duration.Companion.seconds
 
 private val deployPath =
     "${File(SlashCommandHandler::class.java.protectionDomain.codeSource.location.path).parentFile.absolutePath}/../../app.properties"
@@ -16,9 +23,10 @@ private val properties =
 
 val token = getProperty("app.test1.token")
 
-val replyProblemExist = getProperty("command.reply.problem.exist")
+val replyProblemType = getProperty("command.reply.problem.type")
 val optionChannel = getProperty("command.option.channel")
 val optionValue = getProperty("command.option.value")
+val optionTime = getProperty("command.option.time")
 
 val infoDescription = getProperty("command.info.description")
 val infoReply = getProperty("command.info.reply")
@@ -36,31 +44,67 @@ val defchannelDescription = getProperty("command.defchannel.description")
 val defchannelReplyEnable = getProperty("command.defchannel.reply.enable")
 val defchannelReplyDisable = getProperty("command.defchannel.reply.disable")
 
-val afkDescription = getProperty("command.afk.description")
+val afkTimeDescription = getProperty("command.afk.time.description")
+val afkTimeReply = getProperty("command.afk.time.reply")
+
+val afkModeDescription = getProperty("command.afk.mode.description")
+val afkModeReplyEnable = getProperty("command.afk.mode.reply.enable")
+val afkModeReplyDisable = getProperty("command.afk.mode.reply.disable")
 
 class Application {
+    var exitJob: Job? = null
+
     var defaultChannel: AudioChannel? = null
     var currentChannel: AudioChannel? = null
 
-    fun connectToChannel(guild: Guild, channel: AudioChannel?): String {
+    var afkMode = true
+    var afkTime = 10.seconds.inWholeMilliseconds
+
+    fun connect(guild: Guild, channel: AudioChannel?): String {
         if (channel == null) throw NullPointerException("Channel cannot be null")
+        cancelExitJob()
         if (channel == currentChannel) return connectReplyProblemAlready
         guild.audioManager.openAudioConnection(channel)
         currentChannel = channel
         return connectReply
     }
 
-    fun connectToChannel(event: SlashCommandInteractionEvent): String {
+    fun connect(event: SlashCommandInteractionEvent): String {
+        cancelExitJob()
         val channel = getMemberChannel(event)
         if (channel != null) {
-            return connectToChannel(getGuild(event), channel)
+            return connect(getGuild(event), channel)
         }
         return connectReplyProblemMemberout
     }
 
-    fun disconnectToChannel(guild: Guild) {
+    fun disconnect(guild: Guild) {
+        cancelExitJob()
         guild.audioManager.closeAudioConnection()
         currentChannel = null
+    }
+
+    fun isAlone(): Boolean {
+        val currentChannel = this.currentChannel
+        return if (currentChannel != null) currentChannel.members.size <= 1 else false
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    fun afkMode(guild: Guild) {
+        exitJob = GlobalScope.launch {
+            coroutineScope {
+                delay(afkTime)
+                if (afkMode && isAlone()) disconnect(guild)
+            }
+        }
+    }
+
+    private fun cancelExitJob() {
+        val job = exitJob
+        if (job != null) {
+            job.cancel()
+            exitJob = null
+        }
     }
 }
 
