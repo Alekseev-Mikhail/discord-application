@@ -29,6 +29,7 @@ class Startup {
             .updateCommands()
             .addCommands(
                 slash(infoName, infoDescription),
+                slash(stateName, stateDescription),
 
                 slash(connectName, connectDescription)
                     .addOption(CHANNEL, optionChannelName, optionChannelDescription, false),

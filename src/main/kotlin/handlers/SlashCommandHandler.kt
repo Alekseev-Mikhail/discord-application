@@ -23,6 +23,17 @@ import optionChannelName
 import optionTimeName
 import optionValueName
 import replyProblemType
+import stateAfkMode
+import stateAfkModeDisable
+import stateAfkModeEnable
+import stateAfkTime
+import stateCurChannel
+import stateDefChannel
+import stateName
+import stateNull
+import stateTitle
+import java.lang.StringBuilder
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class SlashCommandHandler(private val application: Application) : ListenerAdapter() {
@@ -35,12 +46,23 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         when (event.name) {
             infoName -> reply(event, infoReply)
+            stateName -> reply(event, state())
             connectName -> reply(event, connect(event))
             disconnectName -> reply(event, disconnect(event))
             defchannelName -> reply(event, defChannel(event))
             afkTimeName -> reply(event, afkTime(event))
             afkModeName -> reply(event, afkMode(event))
         }
+    }
+
+    private fun state(): String {
+        val message = StringBuilder()
+        message.append("$stateTitle\n")
+        message.append("$stateCurChannel: ${application.currentChannel?.name ?: stateNull}\n")
+        message.append("$stateDefChannel: ${application.defaultChannel?.name ?: stateNull}\n")
+        message.append("$stateAfkMode: ${if (application.afkMode) stateAfkModeEnable else stateAfkModeDisable}\n")
+        message.append("$stateAfkTime: ${application.afkTime.milliseconds.inWholeSeconds}\n")
+        return message.toString()
     }
 
     private fun connect(event: SlashCommandInteractionEvent): String {

@@ -37,6 +37,17 @@ val infoName = getProperty("command.info.name")
 val infoDescription = getProperty("command.info.description")
 val infoReply = getProperty("command.info.reply")
 
+val stateName = getProperty("command.state.name")
+val stateDescription = getProperty("command.state.description")
+val stateTitle = getProperty("command.state.title")
+val stateNull = getProperty("command.state.null")
+val stateDefChannel = getProperty("command.state.defchannel")
+val stateCurChannel = getProperty("command.state.curchannel")
+val stateAfkMode = getProperty("command.state.afk.mode")
+val stateAfkModeEnable = getProperty("command.state.afk.mode.enable")
+val stateAfkModeDisable = getProperty("command.state.afk.mode.disable")
+val stateAfkTime = getProperty("command.state.afk.time")
+
 val connectName = getProperty("command.connect.name")
 val connectDescription = getProperty("command.connect.description")
 val connectReply = getProperty("command.connect.reply")
@@ -63,13 +74,11 @@ val afkModeReplyEnable = getProperty("command.afk.mode.reply.enable")
 val afkModeReplyDisable = getProperty("command.afk.mode.reply.disable")
 
 class Application {
-    var exitJob: Job? = null
-
     var defaultChannel: AudioChannel? = null
     var currentChannel: AudioChannel? = null
-
     var afkMode = true
     var afkTime = 10.seconds.inWholeMilliseconds
+    private var exitJob: Job? = null
 
     fun connect(guild: Guild, channel: AudioChannel?): String {
         if (channel == null) throw NullPointerException("Channel cannot be null")
@@ -120,7 +129,7 @@ class Application {
 }
 
 private fun getProperty(key: String): String =
-    properties.getProperty(key) ?: throw NullPointerException("Nothing found: $key")
+    properties.getProperty(key) ?: throw NullPointerException("Key is invalid: $key")
 
 fun getGuild(event: SlashCommandInteractionEvent) =
     event.guild ?: throw NullPointerException("Guild cannot be null")
