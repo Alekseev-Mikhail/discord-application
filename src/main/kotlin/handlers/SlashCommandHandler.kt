@@ -6,6 +6,7 @@ import afkModeReplyDisable
 import afkModeReplyEnable
 import afkTimeName
 import afkTimeReply
+import checkCurrentGuild
 import connectName
 import defchannelName
 import defchannelReplyDisable
@@ -44,6 +45,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //    private val playerState = PlayerState()
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
+        checkCurrentGuild(event, getGuild(event))
         when (event.name) {
             infoName -> reply(event, infoReply)
             stateName -> reply(event, state())

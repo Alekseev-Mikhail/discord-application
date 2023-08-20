@@ -8,20 +8,23 @@ import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
+import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
+import java.lang.IllegalArgumentException
 import java.util.Properties
 import kotlin.time.Duration.Companion.seconds
 
 private val deployPath =
     "${File(SlashCommandHandler::class.java.protectionDomain.codeSource.location.path).parentFile.absolutePath}/../../app.properties"
 private const val devPath = "src/main/resources/app.properties"
-private val properties =
-    Properties().apply { load(InputStreamReader(FileInputStream(devPath), "UTF-8")) }
+const val path = devPath
+val properties = Properties().apply { load(InputStreamReader(FileInputStream(path), "UTF-8")) }
 
 val token = getProperty("app.test1.token")
+val guildId = getProperty("app.guild")
 
 val replyProblemType = getProperty("command.reply.problem.type")
 
@@ -128,8 +131,20 @@ class Application {
     }
 }
 
-private fun getProperty(key: String): String =
+fun getProperty(key: String): String =
     properties.getProperty(key) ?: throw NullPointerException("Key is invalid: $key")
+
+fun setProperty(key: String, value: String) {
+    properties.setProperty(key, value) ?: throw NullPointerException("Key is invalid: $key")
+}
+
+fun checkCurrentGuild(event: Event, guild: Guild) {
+    val currentGuild = getCurrentGuild(event)
+    if (guild.id != guildId) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${currentGuild.name}. Current Guild Name: ${guild.name}")
+}
+
+fun getCurrentGuild(event: Event) =
+    event.jda.getGuildById(guildId) ?: throw NullPointerException("Default Guild is invalid. Id: $guildId")
 
 fun getGuild(event: SlashCommandInteractionEvent) =
     event.guild ?: throw NullPointerException("Guild cannot be null")
