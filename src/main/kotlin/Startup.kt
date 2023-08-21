@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType.BOOLEAN
 import net.dv8tion.jda.api.interactions.commands.OptionType.CHANNEL
 import net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
+import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MEMBERS
 import net.dv8tion.jda.api.requests.GatewayIntent.MESSAGE_CONTENT
 import net.dv8tion.jda.api.utils.MemberCachePolicy.VOICE
 import net.dv8tion.jda.api.utils.cache.CacheFlag.VOICE_STATE
@@ -20,6 +21,7 @@ class Startup {
 
         createLight(token)
             .enableIntents(MESSAGE_CONTENT)
+            .enableIntents(GUILD_MEMBERS)
             .enableCache(VOICE_STATE)
             .setMemberCachePolicy(VOICE)
             .addEventListeners(slashCommandHandler)

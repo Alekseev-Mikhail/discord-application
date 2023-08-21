@@ -6,7 +6,6 @@ import afkModeReplyDisable
 import afkModeReplyEnable
 import afkTimeName
 import afkTimeReply
-import checkCurrentGuild
 import connectName
 import defchannelName
 import defchannelReplyDisable
@@ -14,10 +13,9 @@ import defchannelReplyEnable
 import disconnectName
 import disconnectReply
 import disconnectReplyProblem
-import getGuild
-import getOption
 import infoName
 import infoReply
+import load
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import optionChannelName
@@ -45,7 +43,8 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //    private val playerState = PlayerState()
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        checkCurrentGuild(event, getGuild(event))
+        if (application.developer == null) reply(event, load)
+        application.checkCurrentGuild(event, application.getGuild(event))
         when (event.name) {
             infoName -> reply(event, infoReply)
             stateName -> reply(event, state())
@@ -68,7 +67,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun connect(event: SlashCommandInteractionEvent): String {
-        val guild = getGuild(event)
+        val guild = application.getGuild(event)
         val option = event.getOption(optionChannelName)
 
         if (option != null) {
@@ -87,7 +86,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun disconnect(event: SlashCommandInteractionEvent): String {
-        val guild = getGuild(event)
+        val guild = application.getGuild(event)
         if (guild.audioManager.isConnected) {
             application.disconnect(guild)
             return disconnectReply
@@ -111,7 +110,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun afkTime(event: SlashCommandInteractionEvent): String {
-        val time = getOption(event, optionTimeName).asInt
+        val time = application.getOption(event, optionTimeName).asInt
         application.afkTime = time.seconds.inWholeMilliseconds
         return afkTimeReply
     }
@@ -123,7 +122,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
             return when (option.asBoolean) {
                 true -> {
                     application.afkMode = true
-                    application.afkMode(getGuild(event))
+                    application.afkMode(application.getGuild(event))
                     afkModeReplyEnable
                 }
 
@@ -142,7 +141,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 
             false -> {
                 application.afkMode = true
-                application.afkMode(getGuild(event))
+                application.afkMode(application.getGuild(event))
                 afkModeReplyEnable
             }
         }

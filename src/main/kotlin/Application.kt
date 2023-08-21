@@ -6,6 +6,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
 import net.dv8tion.jda.api.events.Event
@@ -23,9 +24,12 @@ private const val devPath = "src/main/resources/app.properties"
 const val path = devPath
 val properties = Properties().apply { load(InputStreamReader(FileInputStream(path), "UTF-8")) }
 
+val developerId = getProperty("app.developer")
+
 val token = getProperty("app.test1.token")
 val guildId = getProperty("app.guild")
 
+val load = getProperty("command.load")
 val replyProblemType = getProperty("command.reply.problem.type")
 
 val optionChannelName = getProperty("command.option.channel.name")
@@ -77,14 +81,20 @@ val afkModeReplyEnable = getProperty("command.afk.mode.reply.enable")
 val afkModeReplyDisable = getProperty("command.afk.mode.reply.disable")
 
 class Application {
+    var developer: User? = null
+
     var defaultChannel: AudioChannel? = null
     var currentChannel: AudioChannel? = null
     var afkMode = true
     var afkTime = 10.seconds.inWholeMilliseconds
     private var exitJob: Job? = null
 
+    fun findDeveloper(event: Event) {
+        developer = event.jda.retrieveUserById(developerId).complete()
+    }
+
     fun connect(guild: Guild, channel: AudioChannel?): String {
-        if (channel == null) throw NullPointerException("Channel cannot be null")
+        if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord()
         cancelExitJob()
         if (channel == currentChannel) return connectReplyProblemAlready
         guild.audioManager.openAudioConnection(channel)
@@ -122,6 +132,38 @@ class Application {
         }
     }
 
+    fun setProperty(key: String, value: String) {
+        properties.setProperty(key, value) ?: throw NullPointerException("Key is invalid: $key").notifyInDiscord()
+    }
+
+    fun checkCurrentGuild(event: Event, guild: Guild) {
+        val currentGuild = getCurrentGuild(event)
+        if (guild.id != guildId) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${currentGuild.name}. Current Guild Name: ${guild.name}").notifyInDiscord()
+    }
+
+    fun getCurrentGuild(event: Event) =
+        event.jda.getGuildById(guildId)
+            ?: throw NullPointerException("Default Guild is invalid. Id: $guildId").notifyInDiscord()
+
+    fun getGuild(event: SlashCommandInteractionEvent) =
+        event.guild ?: throw NullPointerException("Guild cannot be null").notifyInDiscord()
+
+    fun getOption(event: SlashCommandInteractionEvent, name: String) =
+        event.getOption(name) ?: throw NullPointerException("Option cannot be null. Name: $name").notifyInDiscord()
+
+    private fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
+        val member = event.member ?: throw NullPointerException("Member cannot be null").notifyInDiscord()
+        val voiceState = member.voiceState ?: throw NullPointerException("VoiceState cannot be null").notifyInDiscord()
+        return voiceState.channel
+    }
+
+    private fun Exception.notifyInDiscord(): Exception {
+        developer?.openPrivateChannel()?.queue { channel ->
+            channel.sendMessage("Oups! Something went wrong! Message: $message").queue()
+        }
+        return this
+    }
+
     private fun cancelExitJob() {
         val job = exitJob
         if (job != null) {
@@ -133,27 +175,3 @@ class Application {
 
 fun getProperty(key: String): String =
     properties.getProperty(key) ?: throw NullPointerException("Key is invalid: $key")
-
-fun setProperty(key: String, value: String) {
-    properties.setProperty(key, value) ?: throw NullPointerException("Key is invalid: $key")
-}
-
-fun checkCurrentGuild(event: Event, guild: Guild) {
-    val currentGuild = getCurrentGuild(event)
-    if (guild.id != guildId) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${currentGuild.name}. Current Guild Name: ${guild.name}")
-}
-
-fun getCurrentGuild(event: Event) =
-    event.jda.getGuildById(guildId) ?: throw NullPointerException("Default Guild is invalid. Id: $guildId")
-
-fun getGuild(event: SlashCommandInteractionEvent) =
-    event.guild ?: throw NullPointerException("Guild cannot be null")
-
-fun getOption(event: SlashCommandInteractionEvent, name: String) =
-    event.getOption(name) ?: throw NullPointerException("Option cannot be null")
-
-fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
-    val member = event.member ?: throw NullPointerException("Member cannot be null")
-    val voiceState = member.voiceState ?: throw NullPointerException("VoiceState cannot be null")
-    return voiceState.channel
-}
