@@ -1,12 +1,12 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm") version "1.9.10"
+    id("com.zoltu.git-versioning") version "3.0.3"
     application
 }
 
 group = "discord.application"
-version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
