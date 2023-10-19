@@ -1,6 +1,6 @@
 import handlers.DirtyEventHandler
 import handlers.SlashCommandHandler
-import net.dv8tion.jda.api.JDABuilder.createLight
+import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.Permission.ADMINISTRATOR
 import net.dv8tion.jda.api.entities.Activity.listening
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions.enabledFor
@@ -18,7 +18,7 @@ fun main() {
     val dirtyEventHandler = DirtyEventHandler(application)
     val slashCommandHandler = SlashCommandHandler(application)
 
-    createLight(token)
+    JDABuilder.createLight(TOKEN)
         .enableIntents(MESSAGE_CONTENT)
         .enableIntents(GUILD_MEMBERS)
         .enableCache(VOICE_STATE)

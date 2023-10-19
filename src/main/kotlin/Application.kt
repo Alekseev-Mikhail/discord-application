@@ -5,6 +5,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
@@ -13,21 +15,23 @@ import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileWriter
 import java.io.InputStreamReader
 import java.lang.IllegalArgumentException
 import java.util.Properties
+import java.util.Scanner
 import kotlin.time.Duration.Companion.seconds
 
-private val deployPath =
-    "${File(SlashCommandHandler::class.java.protectionDomain.codeSource.location.path).parentFile.absolutePath}/../../app.properties"
-private const val devPath = "src/main/resources/app.properties"
-const val path = devPath
-val properties = Properties().apply { load(InputStreamReader(FileInputStream(path), "UTF-8")) }
+private val DEPLOY_PATH =
+    "${File(SlashCommandHandler::class.java.protectionDomain.codeSource.location.path).parentFile.absolutePath}/../.."
+private const val DEV_PATH = "src/main/resources"
+const val PATH = DEV_PATH
+val PROPERTIES = Properties().apply { load(InputStreamReader(FileInputStream("$PATH/app.properties"), "UTF-8")) }
 
-val developerId = getProperty("app.developer")
+val DEVELOPER_ID = getProperty("app.developer")
 
-val token = getProperty("app.test1.token")
-val guildId = getProperty("app.guild")
+val TOKEN = getProperty("app.token")
+val GUILD_ID = getProperty("app.guild")
 
 val load = getProperty("command.load")
 val replyProblemType = getProperty("command.reply.problem.type")
@@ -82,15 +86,34 @@ val afkModeReplyDisable = getProperty("command.afk.mode.reply.disable")
 
 class Application {
     var developer: User? = null
+    private var exitJob: Job? = null
 
     var defaultChannel: AudioChannel? = null
     var currentChannel: AudioChannel? = null
     var afkMode = true
     var afkTime = 10.seconds.inWholeMilliseconds
-    private var exitJob: Job? = null
+
+    fun save() {
+        val path = "$PATH/app.json"
+        val file = FileWriter(path)
+        val string = Json.encodeToString(ApplicationInfo(defaultChannel?.id ?: "", afkMode, afkTime))
+        file.write(string)
+        file.close()
+    }
+
+    fun read(event: Event) {
+        val file = File("$PATH/app.json")
+        if (file.exists()) {
+            val info = Json.decodeFromString<ApplicationInfo>(Scanner(file).nextLine())
+            val defaultGuild = getDefaultGuild(event)
+            if (info.defaultChannelId.isNotEmpty()) defaultChannel = defaultGuild.getVoiceChannelById(info.defaultChannelId)
+            afkMode = info.afkMode
+            afkTime = info.afkTime
+        }
+    }
 
     fun findDeveloper(event: Event) {
-        developer = event.jda.retrieveUserById(developerId).complete()
+        developer = event.jda.retrieveUserById(DEVELOPER_ID).complete()
     }
 
     fun connect(guild: Guild, channel: AudioChannel?): String {
@@ -132,18 +155,14 @@ class Application {
         }
     }
 
-    fun setProperty(key: String, value: String) {
-        properties.setProperty(key, value) ?: throw NullPointerException("Key is invalid: $key").notifyInDiscord()
-    }
-
     fun checkCurrentGuild(event: Event, guild: Guild) {
-        val currentGuild = getCurrentGuild(event)
-        if (guild.id != guildId) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${currentGuild.name}. Current Guild Name: ${guild.name}").notifyInDiscord()
+        val currentGuild = getDefaultGuild(event)
+        if (guild.id != GUILD_ID) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${currentGuild.name}. Current Guild Name: ${guild.name}").notifyInDiscord()
     }
 
-    fun getCurrentGuild(event: Event) =
-        event.jda.getGuildById(guildId)
-            ?: throw NullPointerException("Default Guild is invalid. Id: $guildId").notifyInDiscord()
+    fun getDefaultGuild(event: Event) =
+        event.jda.getGuildById(GUILD_ID)
+            ?: throw NullPointerException("Default Guild is invalid. Id: $GUILD_ID").notifyInDiscord()
 
     fun getGuild(event: SlashCommandInteractionEvent) =
         event.guild ?: throw NullPointerException("Guild cannot be null").notifyInDiscord()
@@ -174,4 +193,4 @@ class Application {
 }
 
 fun getProperty(key: String): String =
-    properties.getProperty(key) ?: throw NullPointerException("Key is invalid: $key")
+    PROPERTIES.getProperty(key) ?: throw NullPointerException("Key is invalid: $key")
