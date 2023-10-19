@@ -37,9 +37,10 @@ fun main() {
             slash(disconnectName, disconnectDescription),
             slash(defchannelName, defchannelDescription)
                 .addOption(CHANNEL, optionChannelName, optionChannelDescription, false),
-            slash(afkTimeName, afkTimeDescription)
-                .addOption(INTEGER, optionTimeName, optionTimeDescription, true),
 
+            slash(afkTimeName, afkTimeDescription)
+                .addOption(INTEGER, optionTimeName, optionTimeDescription, true)
+                .setDefaultPermissions(enabledFor(ADMINISTRATOR)),
             slash(afkModeName, afkModeDescription)
                 .addOption(BOOLEAN, optionValueName, optionValueDescription, false)
                 .setDefaultPermissions(enabledFor(ADMINISTRATOR)),

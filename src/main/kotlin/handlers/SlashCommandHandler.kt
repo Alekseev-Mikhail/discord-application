@@ -43,7 +43,10 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //    private val playerState = PlayerState()
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        if (application.developer == null) reply(event, load)
+        if (application.developer == null) {
+            reply(event, load)
+            return
+        }
         application.checkCurrentGuild(event, application.getGuild(event))
         when (event.name) {
             infoName -> reply(event, infoReply)
