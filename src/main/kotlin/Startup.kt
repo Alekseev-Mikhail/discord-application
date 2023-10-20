@@ -25,24 +25,24 @@ fun main() {
         .setMemberCachePolicy(VOICE)
         .addEventListeners(slashCommandHandler)
         .addEventListeners(dirtyEventHandler)
-        .setActivity(listening("/$infoName"))
+        .setActivity(listening("/$COMMAND_INFO_NAME"))
         .build()
         .updateCommands()
         .addCommands(
-            slash(infoName, infoDescription),
-            slash(stateName, stateDescription),
+            slash(COMMAND_INFO_NAME, COMMAND_INFO_DESCRIPTION),
+            slash(COMMAND_STATE_NAME, COMMAND_STATE_DESCRIPTION),
 
-            slash(connectName, connectDescription)
-                .addOption(CHANNEL, optionChannelName, optionChannelDescription, false),
-            slash(disconnectName, disconnectDescription),
-            slash(defchannelName, defchannelDescription)
-                .addOption(CHANNEL, optionChannelName, optionChannelDescription, false),
+            slash(COMMAND_CONNECT_NAME, COMMAND_CONNECT_DESCRIPTION)
+                .addOption(CHANNEL, COMMAND_OPTION_CHANNEL_NAME, COMMAND_OPTION_CHANNEL_DESCRIPTION, false),
+            slash(COMMAND_DISCONNECT_NAME, COMMAND_DISCONNECT_DESCRIPTION),
+            slash(COMMAND_DEFCHANNEL_NAME, COMMAND_DEFCHANNEL_DESCRIPTION)
+                .addOption(CHANNEL, COMMAND_OPTION_CHANNEL_NAME, COMMAND_OPTION_CHANNEL_DESCRIPTION, false),
 
-            slash(afkTimeName, afkTimeDescription)
-                .addOption(INTEGER, optionTimeName, optionTimeDescription, true)
+            slash(COMMAND_AFK_TIME_NAME, COMMAND_AFK_TIME_DESCRIPTION)
+                .addOption(INTEGER, COMMAND_OPTION_TIME_NAME, COMMAND_OPTION_TIME_DESCRIPTION, true)
                 .setDefaultPermissions(enabledFor(ADMINISTRATOR)),
-            slash(afkModeName, afkModeDescription)
-                .addOption(BOOLEAN, optionValueName, optionValueDescription, false)
+            slash(COMMAND_AFK_MODE_NAME, COMMAND_AFK_MODE_DESCRIPTION)
+                .addOption(BOOLEAN, COMMAND_OPTION_VALUE_NAME, COMMAND_OPTION_VALUE_DESCRIPTION, false)
                 .setDefaultPermissions(enabledFor(ADMINISTRATOR)),
         )
         .queue()

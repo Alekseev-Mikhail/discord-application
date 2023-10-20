@@ -33,56 +33,57 @@ val DEVELOPER_ID = getProperty("app.developer")
 val TOKEN = getProperty("app.token")
 val GUILD_ID = getProperty("app.guild")
 
-val load = getProperty("command.load")
-val replyProblemType = getProperty("command.reply.problem.type")
+val COMMAND_PROBLEM_LOAD = getProperty("command.problem.load")
 
-val optionChannelName = getProperty("command.option.channel.name")
-val optionValueName = getProperty("command.option.value.name")
-val optionTimeName = getProperty("command.option.time.name")
+val COMMAND_OPTION_CHANNEL_NAME = getProperty("command.option.channel.name")
+val COMMAND_OPTION_VALUE_NAME = getProperty("command.option.value.name")
+val COMMAND_OPTION_TIME_NAME = getProperty("command.option.time.name")
 
-val optionChannelDescription = getProperty("command.option.channel.description")
-val optionValueDescription = getProperty("command.option.value.description")
-val optionTimeDescription = getProperty("command.option.time.description")
+val COMMAND_OPTION_CHANNEL_DESCRIPTION = getProperty("command.option.channel.description")
+val COMMAND_OPTION_VALUE_DESCRIPTION = getProperty("command.option.value.description")
+val COMMAND_OPTION_TIME_DESCRIPTION = getProperty("command.option.time.description")
 
-val infoName = getProperty("command.info.name")
-val infoDescription = getProperty("command.info.description")
-val infoReply = getProperty("command.info.reply")
+val COMMAND_INFO_NAME = getProperty("command.info.name")
+val COMMAND_INFO_DESCRIPTION = getProperty("command.info.description")
+val COMMAND_INFO_REPLY = getProperty("command.info.reply")
 
-val stateName = getProperty("command.state.name")
-val stateDescription = getProperty("command.state.description")
-val stateTitle = getProperty("command.state.title")
-val stateNull = getProperty("command.state.null")
-val stateDefChannel = getProperty("command.state.defchannel")
-val stateCurChannel = getProperty("command.state.curchannel")
-val stateAfkMode = getProperty("command.state.afk.mode")
-val stateAfkModeEnable = getProperty("command.state.afk.mode.enable")
-val stateAfkModeDisable = getProperty("command.state.afk.mode.disable")
-val stateAfkTime = getProperty("command.state.afk.time")
+val COMMAND_STATE_NAME = getProperty("command.state.name")
+val COMMAND_STATE_DESCRIPTION = getProperty("command.state.description")
+val COMMAND_STATE_TITLE = getProperty("command.state.title")
+val COMMAND_STATE_CHANNEL_DEFAULT = getProperty("command.state.channel.default")
+val COMMAND_STATE_CHANNEL_CURRENT = getProperty("command.state.channel.current")
+val COMMAND_STATE_AFK_MODE = getProperty("command.state.afk.mode")
+val COMMAND_STATE_AFK_TIME = getProperty("command.state.afk.time")
+val COMMAND_STATE_VALUE_NULL = getProperty("command.state.value.null")
+val COMMAND_STATE_VALUE_ENABLE = getProperty("command.state.value.enable")
+val COMMAND_STATE_VALUE_DISABLE = getProperty("command.state.value.disable")
 
-val connectName = getProperty("command.connect.name")
-val connectDescription = getProperty("command.connect.description")
-val connectReply = getProperty("command.connect.reply")
-val connectReplyProblemAlready = getProperty("command.connect.reply.problem.already")
-val connectReplyProblemMemberout = getProperty("command.connect.reply.problem.memberout")
+val COMMAND_CONNECT_NAME = getProperty("command.connect.name")
+val COMMAND_CONNECT_DESCRIPTION = getProperty("command.connect.description")
+val COMMAND_CONNECT_REPLY = getProperty("command.connect.reply")
+val COMMAND_CONNECT_REPLY_PROBLEM_ALREADY = getProperty("command.connect.reply.problem.already")
+val COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT = getProperty("command.connect.reply.problem.memberout")
+val COMMAND_CONNECT_REPLY_PROBLEM_TYPE = getProperty("command.connect.reply.problem.type")
 
-val disconnectName = getProperty("command.disconnect.name")
-val disconnectDescription = getProperty("command.disconnect.description")
-val disconnectReply = getProperty("command.disconnect.reply")
-val disconnectReplyProblem = getProperty("command.disconnect.reply.problem")
+val COMMAND_DISCONNECT_NAME = getProperty("command.disconnect.name")
+val COMMAND_DISCONNECT_DESCRIPTION = getProperty("command.disconnect.description")
+val COMMAND_DISCONNECT_REPLY = getProperty("command.disconnect.reply")
+val COMMAND_DISCONNECT_PROBLEM = getProperty("command.disconnect.reply.problem")
 
-val defchannelName = getProperty("command.defchannel.name")
-val defchannelDescription = getProperty("command.defchannel.description")
-val defchannelReplyEnable = getProperty("command.defchannel.reply.enable")
-val defchannelReplyDisable = getProperty("command.defchannel.reply.disable")
+val COMMAND_DEFCHANNEL_NAME = getProperty("command.defchannel.name")
+val COMMAND_DEFCHANNEL_DESCRIPTION = getProperty("command.defchannel.description")
+val COMMAND_DEFCHANNEL_REPLY_ENABLE = getProperty("command.defchannel.reply.enable")
+val COMMAND_DEFCHANNEL_REPLY_DISABLE = getProperty("command.defchannel.reply.disable")
+val COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE = getProperty("command.defchannel.reply.problem.type")
 
-val afkTimeName = getProperty("command.afk.time.name")
-val afkTimeDescription = getProperty("command.afk.time.description")
-val afkTimeReply = getProperty("command.afk.time.reply")
+val COMMAND_AFK_TIME_NAME = getProperty("command.afk.time.name")
+val COMMAND_AFK_TIME_DESCRIPTION = getProperty("command.afk.time.description")
+val COMMAND_AFK_TIME_REPLY = getProperty("command.afk.time.reply")
 
-val afkModeName = getProperty("command.afk.mode.name")
-val afkModeDescription = getProperty("command.afk.mode.description")
-val afkModeReplyEnable = getProperty("command.afk.mode.reply.enable")
-val afkModeReplyDisable = getProperty("command.afk.mode.reply.disable")
+val COMMAND_AFK_MODE_NAME = getProperty("command.afk.mode.name")
+val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
+val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
+val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")
 
 class Application {
     var developer: User? = null
@@ -106,7 +107,10 @@ class Application {
         if (file.exists()) {
             val info = Json.decodeFromString<ApplicationInfo>(Scanner(file).nextLine())
             val defaultGuild = getDefaultGuild(event)
-            if (info.defaultChannelId.isNotEmpty()) defaultChannel = defaultGuild.getVoiceChannelById(info.defaultChannelId)
+            if (info.defaultChannelId.isNotEmpty()) {
+                defaultChannel =
+                    defaultGuild.getVoiceChannelById(info.defaultChannelId)
+            }
             afkMode = info.afkMode
             afkTime = info.afkTime
         }
@@ -119,10 +123,10 @@ class Application {
     fun connect(guild: Guild, channel: AudioChannel?): String {
         if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord()
         cancelExitJob()
-        if (channel == currentChannel) return connectReplyProblemAlready
+        if (channel == currentChannel) return COMMAND_CONNECT_REPLY_PROBLEM_ALREADY
         guild.audioManager.openAudioConnection(channel)
         currentChannel = channel
-        return connectReply
+        return COMMAND_CONNECT_REPLY
     }
 
     fun connect(event: SlashCommandInteractionEvent): String {
@@ -131,7 +135,7 @@ class Application {
         if (channel != null) {
             return connect(getGuild(event), channel)
         }
-        return connectReplyProblemMemberout
+        return COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT
     }
 
     fun disconnect(guild: Guild) {

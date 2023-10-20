@@ -1,36 +1,37 @@
 package handlers
 
 import Application
-import afkModeName
-import afkModeReplyDisable
-import afkModeReplyEnable
-import afkTimeName
-import afkTimeReply
-import connectName
-import defchannelName
-import defchannelReplyDisable
-import defchannelReplyEnable
-import disconnectName
-import disconnectReply
-import disconnectReplyProblem
-import infoName
-import infoReply
-import load
+import COMMAND_AFK_MODE_NAME
+import COMMAND_AFK_MODE_REPLY_DISABLE
+import COMMAND_AFK_MODE_REPLY_ENABLE
+import COMMAND_AFK_TIME_NAME
+import COMMAND_AFK_TIME_REPLY
+import COMMAND_CONNECT_NAME
+import COMMAND_CONNECT_REPLY_PROBLEM_TYPE
+import COMMAND_DEFCHANNEL_NAME
+import COMMAND_DEFCHANNEL_REPLY_DISABLE
+import COMMAND_DEFCHANNEL_REPLY_ENABLE
+import COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE
+import COMMAND_DISCONNECT_NAME
+import COMMAND_DISCONNECT_PROBLEM
+import COMMAND_DISCONNECT_REPLY
+import COMMAND_INFO_NAME
+import COMMAND_INFO_REPLY
+import COMMAND_OPTION_CHANNEL_NAME
+import COMMAND_OPTION_TIME_NAME
+import COMMAND_OPTION_VALUE_NAME
+import COMMAND_PROBLEM_LOAD
+import COMMAND_STATE_AFK_MODE
+import COMMAND_STATE_AFK_TIME
+import COMMAND_STATE_CHANNEL_CURRENT
+import COMMAND_STATE_CHANNEL_DEFAULT
+import COMMAND_STATE_NAME
+import COMMAND_STATE_TITLE
+import COMMAND_STATE_VALUE_DISABLE
+import COMMAND_STATE_VALUE_ENABLE
+import COMMAND_STATE_VALUE_NULL
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import optionChannelName
-import optionTimeName
-import optionValueName
-import replyProblemType
-import stateAfkMode
-import stateAfkModeDisable
-import stateAfkModeEnable
-import stateAfkTime
-import stateCurChannel
-import stateDefChannel
-import stateName
-import stateNull
-import stateTitle
 import java.lang.StringBuilder
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -44,41 +45,41 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         if (application.developer == null) {
-            reply(event, load)
+            reply(event, COMMAND_PROBLEM_LOAD)
             return
         }
         application.checkCurrentGuild(event, application.getGuild(event))
         when (event.name) {
-            infoName -> reply(event, infoReply)
-            stateName -> reply(event, state())
-            connectName -> reply(event, connect(event))
-            disconnectName -> reply(event, disconnect(event))
-            defchannelName -> reply(event, defChannel(event))
-            afkTimeName -> reply(event, afkTime(event))
-            afkModeName -> reply(event, afkMode(event))
+            COMMAND_INFO_NAME -> reply(event, COMMAND_INFO_REPLY)
+            COMMAND_STATE_NAME -> reply(event, state())
+            COMMAND_CONNECT_NAME -> reply(event, connect(event))
+            COMMAND_DISCONNECT_NAME -> reply(event, disconnect(event))
+            COMMAND_DEFCHANNEL_NAME -> reply(event, defChannel(event))
+            COMMAND_AFK_TIME_NAME -> reply(event, afkTime(event))
+            COMMAND_AFK_MODE_NAME -> reply(event, afkMode(event))
         }
     }
 
     private fun state(): String {
         val message = StringBuilder()
-        message.append("$stateTitle\n")
-        message.append("$stateCurChannel: ${application.currentChannel?.name ?: stateNull}\n")
-        message.append("$stateDefChannel: ${application.defaultChannel?.name ?: stateNull}\n")
-        message.append("$stateAfkMode: ${if (application.afkMode) stateAfkModeEnable else stateAfkModeDisable}\n")
-        message.append("$stateAfkTime: ${application.afkTime.milliseconds.inWholeSeconds}\n")
+        message.append("$COMMAND_STATE_TITLE\n")
+        message.append("$COMMAND_STATE_CHANNEL_CURRENT: ${application.currentChannel?.name ?: COMMAND_STATE_VALUE_NULL}\n")
+        message.append("$COMMAND_STATE_CHANNEL_DEFAULT: ${application.defaultChannel?.name ?: COMMAND_STATE_VALUE_NULL}\n")
+        message.append("$COMMAND_STATE_AFK_MODE: ${if (application.afkMode) COMMAND_STATE_VALUE_ENABLE else COMMAND_STATE_VALUE_DISABLE}\n")
+        message.append("$COMMAND_STATE_AFK_TIME: ${application.afkTime.milliseconds.inWholeSeconds}\n")
         return message.toString()
     }
 
     private fun connect(event: SlashCommandInteractionEvent): String {
         val guild = application.getGuild(event)
-        val option = event.getOption(optionChannelName)
+        val option = event.getOption(COMMAND_OPTION_CHANNEL_NAME)
 
         if (option != null) {
             val channel = option.asChannel
             if (channel.type.isAudio) {
                 return application.connect(guild, channel.asAudioChannel())
             }
-            return replyProblemType
+            return COMMAND_CONNECT_REPLY_PROBLEM_TYPE
         }
 
         if (application.defaultChannel != null) {
@@ -92,46 +93,46 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
         val guild = application.getGuild(event)
         if (guild.audioManager.isConnected) {
             application.disconnect(guild)
-            return disconnectReply
+            return COMMAND_DISCONNECT_REPLY
         }
-        return disconnectReplyProblem
+        return COMMAND_DISCONNECT_PROBLEM
     }
 
     private fun defChannel(event: SlashCommandInteractionEvent): String {
-        val option = event.getOption(optionChannelName)
+        val option = event.getOption(COMMAND_OPTION_CHANNEL_NAME)
 
         if (option != null) {
             val channel = option.asChannel
             if (channel.type.isAudio) {
                 application.defaultChannel = channel.asAudioChannel()
-                return defchannelReplyEnable
+                return COMMAND_DEFCHANNEL_REPLY_ENABLE
             }
-            return replyProblemType
+            return COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE
         }
         application.defaultChannel = null
-        return defchannelReplyDisable
+        return COMMAND_DEFCHANNEL_REPLY_DISABLE
     }
 
     private fun afkTime(event: SlashCommandInteractionEvent): String {
-        val time = application.getOption(event, optionTimeName).asInt
+        val time = application.getOption(event, COMMAND_OPTION_TIME_NAME).asInt
         application.afkTime = time.seconds.inWholeMilliseconds
-        return afkTimeReply
+        return COMMAND_AFK_TIME_REPLY
     }
 
     private fun afkMode(event: SlashCommandInteractionEvent): String {
-        val option = event.getOption(optionValueName)
+        val option = event.getOption(COMMAND_OPTION_VALUE_NAME)
 
         if (option != null) {
             return when (option.asBoolean) {
                 true -> {
                     application.afkMode = true
                     application.afkMode(application.getGuild(event))
-                    afkModeReplyEnable
+                    COMMAND_AFK_MODE_REPLY_ENABLE
                 }
 
                 false -> {
                     application.afkMode = false
-                    afkModeReplyDisable
+                    COMMAND_AFK_MODE_REPLY_DISABLE
                 }
             }
         }
@@ -139,13 +140,13 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
         return when (application.afkMode) {
             true -> {
                 application.afkMode = false
-                afkModeReplyDisable
+                COMMAND_AFK_MODE_REPLY_DISABLE
             }
 
             false -> {
                 application.afkMode = true
                 application.afkMode(application.getGuild(event))
-                afkModeReplyEnable
+                COMMAND_AFK_MODE_REPLY_ENABLE
             }
         }
     }
