@@ -7,17 +7,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
-import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileWriter
 import java.io.InputStreamReader
-import java.lang.IllegalArgumentException
 import java.util.Properties
 import java.util.Scanner
 import kotlin.time.Duration.Companion.seconds
@@ -29,9 +25,7 @@ const val PATH = DEV_PATH
 val PROPERTIES = Properties().apply { load(InputStreamReader(FileInputStream("$PATH/app.properties"), "UTF-8")) }
 
 val DEVELOPER_ID = getProperty("app.developer")
-
 val TOKEN = getProperty("app.token")
-val GUILD_ID = getProperty("app.guild")
 
 val COMMAND_OPTION_CHANNEL_NAME = getProperty("command.option.channel.name")
 val COMMAND_OPTION_VALUE_NAME = getProperty("command.option.value.name")
@@ -83,8 +77,7 @@ val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
 val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
 val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")
 
-class Application(private val jda: JDA) {
-    val developer: User = jda.retrieveUserById(DEVELOPER_ID).complete()
+class Application(guild: Guild, private val developer: User) {
     private var exitJob: Job? = null
 
     var defaultChannel: AudioChannel? = null
@@ -92,44 +85,34 @@ class Application(private val jda: JDA) {
     var afkMode = true
     var afkTime = 10.seconds.inWholeMilliseconds
 
-    fun save() {
-        val path = "$PATH/app.json"
-        val file = FileWriter(path)
-        val string = Json.encodeToString(ApplicationInfo(defaultChannel?.id ?: "", afkMode, afkTime))
-        file.write(string)
-        file.close()
-    }
-
-    fun read() {
-        val file = File("$PATH/app.json")
+    init {
+        val file = File("$PATH/${guild.id}/app.json")
         if (file.exists()) {
             val info = Json.decodeFromString<ApplicationInfo>(Scanner(file).nextLine())
-            val defaultGuild = getDefaultGuild()
             if (info.defaultChannelId.isNotEmpty()) {
-                defaultChannel =
-                    defaultGuild.getVoiceChannelById(info.defaultChannelId)
+                defaultChannel = guild.getVoiceChannelById(info.defaultChannelId)
             }
             afkMode = info.afkMode
             afkTime = info.afkTime
         }
     }
 
+    fun save(id: String) {
+        val path = "$PATH/$id"
+        touchDirectory(path)
+        val file = FileWriter("$path/app.json")
+        val string = Json.encodeToString(ApplicationInfo(defaultChannel?.id ?: "", afkMode, afkTime))
+        file.write(string)
+        file.close()
+    }
+
     fun connect(guild: Guild, channel: AudioChannel?): String {
-        if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord()
+        if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord(developer)
         cancelExitJob()
         if (channel == currentChannel) return COMMAND_CONNECT_REPLY_PROBLEM_ALREADY
         guild.audioManager.openAudioConnection(channel)
         currentChannel = channel
         return COMMAND_CONNECT_REPLY
-    }
-
-    fun connect(event: SlashCommandInteractionEvent): String {
-        cancelExitJob()
-        val channel = getMemberChannel(event)
-        if (channel != null) {
-            return connect(getGuild(event), channel)
-        }
-        return COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT
     }
 
     fun disconnect(guild: Guild) {
@@ -153,40 +136,25 @@ class Application(private val jda: JDA) {
         }
     }
 
-    fun checkDefaultGuild(guild: Guild) {
-        val defaultGuild = getDefaultGuild()
-        if (guild.id != GUILD_ID) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${defaultGuild.name}. Current Guild Name: ${guild.name}").notifyInDiscord()
-    }
-
-    fun getGuild(event: SlashCommandInteractionEvent) =
-        event.guild ?: throw NullPointerException("Guild cannot be null").notifyInDiscord()
-
-    fun getOption(event: SlashCommandInteractionEvent, name: String) =
-        event.getOption(name) ?: throw NullPointerException("Option cannot be null. Name: $name").notifyInDiscord()
-
-    private fun getDefaultGuild() =
-        jda.getGuildById(GUILD_ID)
-            ?: throw NullPointerException("Default Guild is invalid. Id: $GUILD_ID").notifyInDiscord()
-
-    private fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
-        val member = event.member ?: throw NullPointerException("Member cannot be null").notifyInDiscord()
-        val voiceState = member.voiceState ?: throw NullPointerException("VoiceState cannot be null").notifyInDiscord()
-        return voiceState.channel
-    }
-
-    private fun Exception.notifyInDiscord(): Exception {
-        developer.openPrivateChannel().queue { channel ->
-            channel.sendMessage("Oups! Something went wrong! Message: $message").queue()
-        }
-        return this
-    }
-
     private fun cancelExitJob() {
         val job = exitJob
         if (job != null) {
             job.cancel()
             exitJob = null
         }
+    }
+}
+
+fun Exception.notifyInDiscord(developer: User): Exception {
+    developer.openPrivateChannel().queue { channel ->
+        channel.sendMessage("Oups! Something went wrong! Message: $message").queue()
+    }
+    return this
+}
+
+fun touchDirectory(path: String) {
+    if (!File(path).exists()) {
+        File(path).mkdir()
     }
 }
 

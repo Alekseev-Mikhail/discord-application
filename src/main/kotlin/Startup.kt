@@ -22,9 +22,10 @@ fun main() {
         .setActivity(listening("/$COMMAND_INFO_NAME"))
         .build()
 
-    val application = Application(jda)
-    val dirtyEventHandler = DirtyEventHandler(application)
-    val slashCommandHandler = SlashCommandHandler(application)
+    val developer = jda.retrieveUserById(DEVELOPER_ID).complete()
+    val applications = mutableMapOf<String, Application>()
+    val dirtyEventHandler = DirtyEventHandler(applications, developer)
+    val slashCommandHandler = SlashCommandHandler(applications, developer)
 
     jda.addEventListener(dirtyEventHandler, slashCommandHandler)
     jda.updateCommands()

@@ -7,6 +7,7 @@ import COMMAND_AFK_MODE_REPLY_ENABLE
 import COMMAND_AFK_TIME_NAME
 import COMMAND_AFK_TIME_REPLY
 import COMMAND_CONNECT_NAME
+import COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT
 import COMMAND_CONNECT_REPLY_PROBLEM_TYPE
 import COMMAND_DEFCHANNEL_NAME
 import COMMAND_DEFCHANNEL_REPLY_DISABLE
@@ -29,13 +30,18 @@ import COMMAND_STATE_TITLE
 import COMMAND_STATE_VALUE_DISABLE
 import COMMAND_STATE_VALUE_ENABLE
 import COMMAND_STATE_VALUE_NULL
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import notifyInDiscord
 import java.lang.StringBuilder
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class SlashCommandHandler(private val application: Application) : ListenerAdapter() {
+class SlashCommandHandler(private val applications: MutableMap<String, Application>, private val developer: User) :
+    ListenerAdapter() {
 //    private val playerManager = DefaultAudioPlayerManager().apply { registerRemoteSources(this) }
 //    private val players = mutableMapOf<Guild, AudioPlayer>()
 //    private val addressQueue = mutableListOf<String>()
@@ -43,10 +49,9 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //    private val playerState = PlayerState()
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        application.checkDefaultGuild(application.getGuild(event))
         when (event.name) {
             COMMAND_INFO_NAME -> reply(event, COMMAND_INFO_REPLY)
-            COMMAND_STATE_NAME -> reply(event, state())
+            COMMAND_STATE_NAME -> reply(event, state(event))
             COMMAND_CONNECT_NAME -> reply(event, connect(event))
             COMMAND_DISCONNECT_NAME -> reply(event, disconnect(event))
             COMMAND_DEFCHANNEL_NAME -> reply(event, defChannel(event))
@@ -55,7 +60,8 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
         }
     }
 
-    private fun state(): String {
+    private fun state(event: SlashCommandInteractionEvent): String {
+        val application = getApplication(getGuild(event))
         val message = StringBuilder()
         message.append("$COMMAND_STATE_TITLE\n")
         message.append("$COMMAND_STATE_CHANNEL_CURRENT: ${application.currentChannel?.name ?: COMMAND_STATE_VALUE_NULL}\n")
@@ -66,7 +72,8 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun connect(event: SlashCommandInteractionEvent): String {
-        val guild = application.getGuild(event)
+        val guild = getGuild(event)
+        val application = getApplication(guild)
         val option = event.getOption(COMMAND_OPTION_CHANNEL_NAME)
 
         if (option != null) {
@@ -81,11 +88,16 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
             return application.connect(guild, application.defaultChannel)
         }
 
-        return application.connect(event)
+        val channel = getMemberChannel(event)
+        if (channel != null) {
+            return application.connect(guild, channel)
+        }
+        return COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT
     }
 
     private fun disconnect(event: SlashCommandInteractionEvent): String {
-        val guild = application.getGuild(event)
+        val guild = getGuild(event)
+        val application = getApplication(guild)
         if (guild.audioManager.isConnected) {
             application.disconnect(guild)
             return COMMAND_DISCONNECT_REPLY
@@ -94,6 +106,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
     }
 
     private fun defChannel(event: SlashCommandInteractionEvent): String {
+        val application = getApplication(getGuild(event))
         val option = event.getOption(COMMAND_OPTION_CHANNEL_NAME)
 
         if (option != null) {
@@ -108,20 +121,76 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
         return COMMAND_DEFCHANNEL_REPLY_DISABLE
     }
 
+//    private fun queue(event: SlashCommandInteractionEvent, option: String, queueCommand: Boolean) {
+//        val guild = event.guild!!
+//        addServer(guild)
+//        playerManager.loadItem(option, object : AudioLoadResultHandler {
+//            override fun trackLoaded(track: AudioTrack) {
+//                val trackQueue = trackQueue[guild]!!
+//                val addressQueue = addressQueue[guild]!!
+//                val player = players[guild]!!
+//                val playerState = playerState[guild]!!
+//                if (queueCommand) {
+//                    trackQueue.add(track)
+//                    addressQueue.add(option)
+//                    event.reply("Музыка добавлена в очередь.").setEphemeral(true).queue()
+//                } else {
+//                    trackQueue.add(track)
+//                    addressQueue.add(option)
+//                    play(event)
+//                    playerState.playing = true
+//                    player.playTrack(track)
+//                }
+//            }
+//
+//            override fun playlistLoaded(playlist: AudioPlaylist) {
+//                val trackQueue = trackQueue[guild]!!
+//                val addressQueue = addressQueue[guild]!!
+//                val player = players[guild]!!
+//                val playerState = playerState[guild]!!
+//                if (queueCommand) {
+//                    for (track in playlist.tracks) {
+//                        trackQueue.add(track)
+//                        addressQueue.add(option)
+//                    }
+//                    event.reply("Музыка добавлена в очередь.").setEphemeral(true).queue()
+//                } else {
+//                    for (track in playlist.tracks) {
+//                        trackQueue.add(track)
+//                        addressQueue.add(option)
+//                    }
+//                    playerState.playing = true
+//                    player.playTrack(trackQueue[0])
+//                }
+//            }
+//
+//            override fun noMatches() {
+//                event.reply("По данной ссылке музыки нет.").setEphemeral(true).queue()
+//            }
+//
+//            override fun loadFailed(throwable: FriendlyException) {
+//                event.reply("Ошибка при загрузке музыки.").setEphemeral(true).queue()
+//            }
+//        })
+//    }
+
     private fun afkTime(event: SlashCommandInteractionEvent): String {
-        val time = application.getOption(event, COMMAND_OPTION_TIME_NAME).asInt
+        val application = getApplication(getGuild(event))
+        val time = getOption(event, COMMAND_OPTION_TIME_NAME).asInt
         application.afkTime = time.seconds.inWholeMilliseconds
         return COMMAND_AFK_TIME_REPLY
     }
 
     private fun afkMode(event: SlashCommandInteractionEvent): String {
+        val guild = getGuild(event)
+        val application = getApplication(guild)
         val option = event.getOption(COMMAND_OPTION_VALUE_NAME)
 
         if (option != null) {
             return when (option.asBoolean) {
                 true -> {
                     application.afkMode = true
-                    application.afkMode(application.getGuild(event))
+                    application.afkMode(guild)
                     COMMAND_AFK_MODE_REPLY_ENABLE
                 }
 
@@ -140,15 +209,11 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 
             false -> {
                 application.afkMode = true
-                application.afkMode(application.getGuild(event))
+                application.afkMode(guild)
                 COMMAND_AFK_MODE_REPLY_ENABLE
             }
         }
     }
-//    private fun afk(event: SlashCommandInteractionEvent): String {
-//        val guild = event.guild ?: throw NullPointerException("Guild cannot be null in afk")
-//
-//    }
 //
 //    fun debug() {
 //        for (logger in LoggerFactory.getILoggerFactory()) {
@@ -227,58 +292,6 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //        return "Состояние изменено."
 //    }
 //
-//    private fun queue(event: SlashCommandInteractionEvent, option: String, queueCommand: Boolean) {
-//        val guild = event.guild!!
-//        addServer(guild)
-//        playerManager.loadItem(option, object : AudioLoadResultHandler {
-//            override fun trackLoaded(track: AudioTrack) {
-//                val trackQueue = trackQueue[guild]!!
-//                val addressQueue = addressQueue[guild]!!
-//                val player = players[guild]!!
-//                val playerState = playerState[guild]!!
-//                if (queueCommand) {
-//                    trackQueue.add(track)
-//                    addressQueue.add(option)
-//                    event.reply("Музыка добавлена в очередь.").setEphemeral(true).queue()
-//                } else {
-//                    trackQueue.add(track)
-//                    addressQueue.add(option)
-//                    play(event)
-//                    playerState.playing = true
-//                    player.playTrack(track)
-//                }
-//            }
-//
-//            override fun playlistLoaded(playlist: AudioPlaylist) {
-//                val trackQueue = trackQueue[guild]!!
-//                val addressQueue = addressQueue[guild]!!
-//                val player = players[guild]!!
-//                val playerState = playerState[guild]!!
-//                if (queueCommand) {
-//                    for (track in playlist.tracks) {
-//                        trackQueue.add(track)
-//                        addressQueue.add(option)
-//                    }
-//                    event.reply("Музыка добавлена в очередь.").setEphemeral(true).queue()
-//                } else {
-//                    for (track in playlist.tracks) {
-//                        trackQueue.add(track)
-//                        addressQueue.add(option)
-//                    }
-//                    playerState.playing = true
-//                    player.playTrack(trackQueue[0])
-//                }
-//            }
-//
-//            override fun noMatches() {
-//                event.reply("По данной ссылке музыки нет.").setEphemeral(true).queue()
-//            }
-//
-//            override fun loadFailed(throwable: FriendlyException) {
-//                event.reply("Ошибка при загрузке музыки.").setEphemeral(true).queue()
-//            }
-//        })
-//    }
 //
 //    private fun clone(event: SlashCommandInteractionEvent): String {
 //        val guild = event.guild!!
@@ -355,4 +368,22 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 
     private fun reply(event: SlashCommandInteractionEvent, message: String) =
         event.reply(message).setEphemeral(true).queue()
+
+    private fun getApplication(guild: Guild) = applications[guild.id]
+        ?: throw NullPointerException("Audio channel was updated in an unknown guild").notifyInDiscord(developer)
+
+    private fun getGuild(event: SlashCommandInteractionEvent) =
+        event.guild ?: throw NullPointerException("Guild cannot be null").notifyInDiscord(developer)
+
+    private fun getOption(event: SlashCommandInteractionEvent, name: String) =
+        event.getOption(name) ?: throw NullPointerException("Option cannot be null. Name: $name").notifyInDiscord(
+            developer,
+        )
+
+    private fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
+        val member = event.member ?: throw NullPointerException("Member cannot be null").notifyInDiscord(developer)
+        val voiceState =
+            member.voiceState ?: throw NullPointerException("VoiceState cannot be null").notifyInDiscord(developer)
+        return voiceState.channel
+    }
 }
