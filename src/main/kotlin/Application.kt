@@ -7,11 +7,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
-import net.dv8tion.jda.api.events.Event
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import java.io.File
 import java.io.FileInputStream
@@ -32,8 +32,6 @@ val DEVELOPER_ID = getProperty("app.developer")
 
 val TOKEN = getProperty("app.token")
 val GUILD_ID = getProperty("app.guild")
-
-val COMMAND_PROBLEM_LOAD = getProperty("command.problem.load")
 
 val COMMAND_OPTION_CHANNEL_NAME = getProperty("command.option.channel.name")
 val COMMAND_OPTION_VALUE_NAME = getProperty("command.option.value.name")
@@ -85,8 +83,8 @@ val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
 val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
 val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")
 
-class Application {
-    var developer: User? = null
+class Application(private val jda: JDA) {
+    val developer: User = jda.retrieveUserById(DEVELOPER_ID).complete()
     private var exitJob: Job? = null
 
     var defaultChannel: AudioChannel? = null
@@ -102,11 +100,11 @@ class Application {
         file.close()
     }
 
-    fun read(event: Event) {
+    fun read() {
         val file = File("$PATH/app.json")
         if (file.exists()) {
             val info = Json.decodeFromString<ApplicationInfo>(Scanner(file).nextLine())
-            val defaultGuild = getDefaultGuild(event)
+            val defaultGuild = getDefaultGuild()
             if (info.defaultChannelId.isNotEmpty()) {
                 defaultChannel =
                     defaultGuild.getVoiceChannelById(info.defaultChannelId)
@@ -114,10 +112,6 @@ class Application {
             afkMode = info.afkMode
             afkTime = info.afkTime
         }
-    }
-
-    fun findDeveloper(event: Event) {
-        developer = event.jda.retrieveUserById(DEVELOPER_ID).complete()
     }
 
     fun connect(guild: Guild, channel: AudioChannel?): String {
@@ -159,20 +153,20 @@ class Application {
         }
     }
 
-    fun checkCurrentGuild(event: Event, guild: Guild) {
-        val currentGuild = getDefaultGuild(event)
-        if (guild.id != GUILD_ID) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${currentGuild.name}. Current Guild Name: ${guild.name}").notifyInDiscord()
+    fun checkDefaultGuild(guild: Guild) {
+        val defaultGuild = getDefaultGuild()
+        if (guild.id != GUILD_ID) throw IllegalArgumentException("Event from another guild. Default Guild Name: ${defaultGuild.name}. Current Guild Name: ${guild.name}").notifyInDiscord()
     }
-
-    fun getDefaultGuild(event: Event) =
-        event.jda.getGuildById(GUILD_ID)
-            ?: throw NullPointerException("Default Guild is invalid. Id: $GUILD_ID").notifyInDiscord()
 
     fun getGuild(event: SlashCommandInteractionEvent) =
         event.guild ?: throw NullPointerException("Guild cannot be null").notifyInDiscord()
 
     fun getOption(event: SlashCommandInteractionEvent, name: String) =
         event.getOption(name) ?: throw NullPointerException("Option cannot be null. Name: $name").notifyInDiscord()
+
+    private fun getDefaultGuild() =
+        jda.getGuildById(GUILD_ID)
+            ?: throw NullPointerException("Default Guild is invalid. Id: $GUILD_ID").notifyInDiscord()
 
     private fun getMemberChannel(event: SlashCommandInteractionEvent): AudioChannelUnion? {
         val member = event.member ?: throw NullPointerException("Member cannot be null").notifyInDiscord()
@@ -181,7 +175,7 @@ class Application {
     }
 
     private fun Exception.notifyInDiscord(): Exception {
-        developer?.openPrivateChannel()?.queue { channel ->
+        developer.openPrivateChannel().queue { channel ->
             channel.sendMessage("Oups! Something went wrong! Message: $message").queue()
         }
         return this

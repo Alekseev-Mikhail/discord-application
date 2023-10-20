@@ -20,7 +20,6 @@ import COMMAND_INFO_REPLY
 import COMMAND_OPTION_CHANNEL_NAME
 import COMMAND_OPTION_TIME_NAME
 import COMMAND_OPTION_VALUE_NAME
-import COMMAND_PROBLEM_LOAD
 import COMMAND_STATE_AFK_MODE
 import COMMAND_STATE_AFK_TIME
 import COMMAND_STATE_CHANNEL_CURRENT
@@ -44,11 +43,7 @@ class SlashCommandHandler(private val application: Application) : ListenerAdapte
 //    private val playerState = PlayerState()
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        if (application.developer == null) {
-            reply(event, COMMAND_PROBLEM_LOAD)
-            return
-        }
-        application.checkCurrentGuild(event, application.getGuild(event))
+        application.checkDefaultGuild(application.getGuild(event))
         when (event.name) {
             COMMAND_INFO_NAME -> reply(event, COMMAND_INFO_REPLY)
             COMMAND_STATE_NAME -> reply(event, state())

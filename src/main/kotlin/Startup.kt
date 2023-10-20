@@ -14,20 +14,20 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy.VOICE
 import net.dv8tion.jda.api.utils.cache.CacheFlag.VOICE_STATE
 
 fun main() {
-    val application = Application()
-    val dirtyEventHandler = DirtyEventHandler(application)
-    val slashCommandHandler = SlashCommandHandler(application)
-
-    JDABuilder.createLight(TOKEN)
+    val jda = JDABuilder.createLight(TOKEN)
         .enableIntents(MESSAGE_CONTENT)
         .enableIntents(GUILD_MEMBERS)
         .enableCache(VOICE_STATE)
         .setMemberCachePolicy(VOICE)
-        .addEventListeners(slashCommandHandler)
-        .addEventListeners(dirtyEventHandler)
         .setActivity(listening("/$COMMAND_INFO_NAME"))
         .build()
-        .updateCommands()
+
+    val application = Application(jda)
+    val dirtyEventHandler = DirtyEventHandler(application)
+    val slashCommandHandler = SlashCommandHandler(application)
+
+    jda.addEventListener(dirtyEventHandler, slashCommandHandler)
+    jda.updateCommands()
         .addCommands(
             slash(COMMAND_INFO_NAME, COMMAND_INFO_DESCRIPTION),
             slash(COMMAND_STATE_NAME, COMMAND_STATE_DESCRIPTION),
