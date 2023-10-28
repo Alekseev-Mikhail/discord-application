@@ -58,11 +58,6 @@ class SlashCommandHandler(
     private val playerManager: DefaultAudioPlayerManager,
     private val developer: User,
 ) : ListenerAdapter() {
-//    private val players = mutableMapOf<Guild, AudioPlayer>()
-//    private val addressQueue = mutableListOf<String>()
-//    private val trackQueue = mutableListOf<AudioTrack>()
-//    private val playerState = PlayerState()
-
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         when (event.name) {
             COMMAND_INSTRUCTION_NAME -> reply(event, COMMAND_INSTRUCTION_REPLY)
@@ -171,7 +166,7 @@ class SlashCommandHandler(
     }
 
     private fun check(event: SlashCommandInteractionEvent): String =
-        getServer(event).trackQueue.joinToString(separator = "\n") { it.info.uri }.ifBlank { COMMAND_CHECK_REPLY }
+        getServer(event).trackQueue.joinToString(separator = "\n") { "${it.info.title}: ${it.info.uri}" }.ifBlank { COMMAND_CHECK_REPLY }
 
     private fun afkTime(event: SlashCommandInteractionEvent): String {
         val server = getServer(event)
