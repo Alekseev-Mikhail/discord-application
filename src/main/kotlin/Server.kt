@@ -43,11 +43,11 @@ val COMMAND_OPTION_VALUE_DESCRIPTION = getProperty("command.option.value.descrip
 val COMMAND_OPTION_TIME_DESCRIPTION = getProperty("command.option.time.description")
 val COMMAND_OPTION_ADDRESS_DESCRIPTION = getProperty("command.option.address.description")
 
-val COMMAND_INFO_NAME = getProperty("command.info.name")
-val COMMAND_INFO_DESCRIPTION = getProperty("command.info.description")
-val COMMAND_INFO_REPLY = getProperty("command.info.reply")
+const val COMMAND_INSTRUCTION_NAME = "instruction"
+val COMMAND_INSTRUCTION_DESCRIPTION = getProperty("command.instruction.description")
+val COMMAND_INSTRUCTION_REPLY = getProperty("command.instruction.reply")
 
-val COMMAND_STATE_NAME = getProperty("command.state.name")
+const val COMMAND_STATE_NAME = "state"
 val COMMAND_STATE_DESCRIPTION = getProperty("command.state.description")
 val COMMAND_STATE_TITLE = getProperty("command.state.title")
 val COMMAND_STATE_CHANNEL_DEFAULT = getProperty("command.state.channel.default")
@@ -58,40 +58,40 @@ val COMMAND_STATE_VALUE_NULL = getProperty("command.state.value.null")
 val COMMAND_STATE_VALUE_ENABLE = getProperty("command.state.value.enable")
 val COMMAND_STATE_VALUE_DISABLE = getProperty("command.state.value.disable")
 
-val COMMAND_CONNECT_NAME = getProperty("command.connect.name")
+const val COMMAND_CONNECT_NAME = "connect"
 val COMMAND_CONNECT_DESCRIPTION = getProperty("command.connect.description")
 val COMMAND_CONNECT_REPLY = getProperty("command.connect.reply")
 val COMMAND_CONNECT_REPLY_PROBLEM_ALREADY = getProperty("command.connect.reply.problem.already")
 val COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT = getProperty("command.connect.reply.problem.memberout")
 val COMMAND_CONNECT_REPLY_PROBLEM_TYPE = getProperty("command.connect.reply.problem.type")
 
-val COMMAND_DISCONNECT_NAME = getProperty("command.disconnect.name")
+const val COMMAND_DISCONNECT_NAME = "disconnect"
 val COMMAND_DISCONNECT_DESCRIPTION = getProperty("command.disconnect.description")
 val COMMAND_DISCONNECT_REPLY = getProperty("command.disconnect.reply")
 val COMMAND_DISCONNECT_PROBLEM = getProperty("command.disconnect.reply.problem")
 
-val COMMAND_DEFCHANNEL_NAME = getProperty("command.defchannel.name")
+const val COMMAND_DEFCHANNEL_NAME = "def-channel"
 val COMMAND_DEFCHANNEL_DESCRIPTION = getProperty("command.defchannel.description")
 val COMMAND_DEFCHANNEL_REPLY_ENABLE = getProperty("command.defchannel.reply.enable")
 val COMMAND_DEFCHANNEL_REPLY_DISABLE = getProperty("command.defchannel.reply.disable")
 val COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE = getProperty("command.defchannel.reply.problem.type")
 
-val COMMAND_QUEUE_NAME = getProperty("command.queue.name")
+const val COMMAND_QUEUE_NAME = "queue"
 val COMMAND_QUEUE_DESCRIPTION = getProperty("command.queue.description")
 val COMMAND_QUEUE_REPLY_TRACK = getProperty("command.queue.reply.track")
 val COMMAND_QUEUE_REPLY_PLAYLIST = getProperty("command.queue.reply.playlist")
 val COMMAND_QUEUE_REPLY_PROBLEM_FOUND = getProperty("command.queue.reply.problem.found")
 val COMMAND_QUEUE_REPLY_PROBLEM_FAILED = getProperty("command.queue.reply.problem.failed")
 
-val COMMAND_CHECK_NAME = getProperty("command.check.name")
+const val COMMAND_CHECK_NAME = "check"
 val COMMAND_CHECK_DESCRIPTION = getProperty("command.check.description")
 val COMMAND_CHECK_REPLY = getProperty("command.check.reply")
 
-val COMMAND_AFK_TIME_NAME = getProperty("command.afk.time.name")
+const val COMMAND_AFK_TIME_NAME = "afk-time"
 val COMMAND_AFK_TIME_DESCRIPTION = getProperty("command.afk.time.description")
 val COMMAND_AFK_TIME_REPLY = getProperty("command.afk.time.reply")
 
-val COMMAND_AFK_MODE_NAME = getProperty("command.afk.mode.name")
+const val COMMAND_AFK_MODE_NAME = "afk-mode"
 val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
 val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
 val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")

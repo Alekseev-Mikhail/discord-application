@@ -22,7 +22,7 @@ fun main() {
         .enableIntents(GUILD_MEMBERS)
         .enableCache(VOICE_STATE)
         .setMemberCachePolicy(VOICE)
-        .setActivity(listening("/$COMMAND_INFO_NAME"))
+        .setActivity(listening("/$COMMAND_INSTRUCTION_NAME"))
         .build()
 
     val developer = jda.retrieveUserById(DEVELOPER_ID).complete()
@@ -34,7 +34,7 @@ fun main() {
     jda.addEventListener(dirtyEventHandler, slashCommandHandler)
     jda.updateCommands()
         .addCommands(
-            slash(COMMAND_INFO_NAME, COMMAND_INFO_DESCRIPTION),
+            slash(COMMAND_INSTRUCTION_NAME, COMMAND_INSTRUCTION_DESCRIPTION),
             slash(COMMAND_STATE_NAME, COMMAND_STATE_DESCRIPTION),
 
             slash(COMMAND_CONNECT_NAME, COMMAND_CONNECT_DESCRIPTION)

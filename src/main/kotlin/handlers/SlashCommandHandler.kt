@@ -17,8 +17,8 @@ import COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE
 import COMMAND_DISCONNECT_NAME
 import COMMAND_DISCONNECT_PROBLEM
 import COMMAND_DISCONNECT_REPLY
-import COMMAND_INFO_NAME
-import COMMAND_INFO_REPLY
+import COMMAND_INSTRUCTION_NAME
+import COMMAND_INSTRUCTION_REPLY
 import COMMAND_OPTION_ADDRESS_NAME
 import COMMAND_OPTION_CHANNEL_NAME
 import COMMAND_OPTION_TIME_NAME
@@ -65,7 +65,7 @@ class SlashCommandHandler(
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         when (event.name) {
-            COMMAND_INFO_NAME -> reply(event, COMMAND_INFO_REPLY)
+            COMMAND_INSTRUCTION_NAME -> reply(event, COMMAND_INSTRUCTION_REPLY)
             COMMAND_STATE_NAME -> reply(event, state(event))
             COMMAND_CONNECT_NAME -> reply(event, connect(event))
             COMMAND_DISCONNECT_NAME -> reply(event, disconnect(event))
