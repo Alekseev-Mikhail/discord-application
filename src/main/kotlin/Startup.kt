@@ -1,3 +1,5 @@
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import handlers.DirtyEventHandler
 import handlers.SlashCommandHandler
 import net.dv8tion.jda.api.JDABuilder
@@ -7,6 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions.enable
 import net.dv8tion.jda.api.interactions.commands.OptionType.BOOLEAN
 import net.dv8tion.jda.api.interactions.commands.OptionType.CHANNEL
 import net.dv8tion.jda.api.interactions.commands.OptionType.INTEGER
+import net.dv8tion.jda.api.interactions.commands.OptionType.STRING
 import net.dv8tion.jda.api.interactions.commands.build.Commands.slash
 import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MEMBERS
 import net.dv8tion.jda.api.requests.GatewayIntent.MESSAGE_CONTENT
@@ -23,9 +26,10 @@ fun main() {
         .build()
 
     val developer = jda.retrieveUserById(DEVELOPER_ID).complete()
-    val applications = mutableMapOf<String, Application>()
-    val dirtyEventHandler = DirtyEventHandler(applications, developer)
-    val slashCommandHandler = SlashCommandHandler(applications, developer)
+    val servers = mutableMapOf<String, Server>()
+    val playerManager = DefaultAudioPlayerManager().apply { AudioSourceManagers.registerRemoteSources(this) }
+    val dirtyEventHandler = DirtyEventHandler(servers, playerManager, developer)
+    val slashCommandHandler = SlashCommandHandler(servers, playerManager, developer)
 
     jda.addEventListener(dirtyEventHandler, slashCommandHandler)
     jda.updateCommands()
@@ -38,6 +42,10 @@ fun main() {
             slash(COMMAND_DISCONNECT_NAME, COMMAND_DISCONNECT_DESCRIPTION),
             slash(COMMAND_DEFCHANNEL_NAME, COMMAND_DEFCHANNEL_DESCRIPTION)
                 .addOption(CHANNEL, COMMAND_OPTION_CHANNEL_NAME, COMMAND_OPTION_CHANNEL_DESCRIPTION, false),
+
+            slash(COMMAND_QUEUE_NAME, COMMAND_QUEUE_DESCRIPTION)
+                .addOption(STRING, COMMAND_OPTION_ADDRESS_NAME, COMMAND_OPTION_ADDRESS_DESCRIPTION, true),
+            slash(COMMAND_CHECK_NAME, COMMAND_CHECK_DESCRIPTION),
 
             slash(COMMAND_AFK_TIME_NAME, COMMAND_AFK_TIME_DESCRIPTION)
                 .addOption(INTEGER, COMMAND_OPTION_TIME_NAME, COMMAND_OPTION_TIME_DESCRIPTION, true)

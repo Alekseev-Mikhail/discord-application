@@ -1,3 +1,9 @@
+
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import handlers.AudioLoader
 import handlers.SlashCommandHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -30,10 +36,12 @@ val TOKEN = getProperty("app.token")
 val COMMAND_OPTION_CHANNEL_NAME = getProperty("command.option.channel.name")
 val COMMAND_OPTION_VALUE_NAME = getProperty("command.option.value.name")
 val COMMAND_OPTION_TIME_NAME = getProperty("command.option.time.name")
+val COMMAND_OPTION_ADDRESS_NAME = getProperty("command.option.address.name")
 
 val COMMAND_OPTION_CHANNEL_DESCRIPTION = getProperty("command.option.channel.description")
 val COMMAND_OPTION_VALUE_DESCRIPTION = getProperty("command.option.value.description")
 val COMMAND_OPTION_TIME_DESCRIPTION = getProperty("command.option.time.description")
+val COMMAND_OPTION_ADDRESS_DESCRIPTION = getProperty("command.option.address.description")
 
 val COMMAND_INFO_NAME = getProperty("command.info.name")
 val COMMAND_INFO_DESCRIPTION = getProperty("command.info.description")
@@ -68,6 +76,17 @@ val COMMAND_DEFCHANNEL_REPLY_ENABLE = getProperty("command.defchannel.reply.enab
 val COMMAND_DEFCHANNEL_REPLY_DISABLE = getProperty("command.defchannel.reply.disable")
 val COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE = getProperty("command.defchannel.reply.problem.type")
 
+val COMMAND_QUEUE_NAME = getProperty("command.queue.name")
+val COMMAND_QUEUE_DESCRIPTION = getProperty("command.queue.description")
+val COMMAND_QUEUE_REPLY_TRACK = getProperty("command.queue.reply.track")
+val COMMAND_QUEUE_REPLY_PLAYLIST = getProperty("command.queue.reply.playlist")
+val COMMAND_QUEUE_REPLY_PROBLEM_FOUND = getProperty("command.queue.reply.problem.found")
+val COMMAND_QUEUE_REPLY_PROBLEM_FAILED = getProperty("command.queue.reply.problem.failed")
+
+val COMMAND_CHECK_NAME = getProperty("command.check.name")
+val COMMAND_CHECK_DESCRIPTION = getProperty("command.check.description")
+val COMMAND_CHECK_REPLY = getProperty("command.check.reply")
+
 val COMMAND_AFK_TIME_NAME = getProperty("command.afk.time.name")
 val COMMAND_AFK_TIME_DESCRIPTION = getProperty("command.afk.time.description")
 val COMMAND_AFK_TIME_REPLY = getProperty("command.afk.time.reply")
@@ -77,23 +96,45 @@ val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
 val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
 val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")
 
-class Application(guild: Guild, private val developer: User) {
+class Server(guild: Guild, playerManager: DefaultAudioPlayerManager, private val developer: User) {
+    private val player = playerManager.createPlayer()
     private var exitJob: Job? = null
 
     var defaultChannel: AudioChannel? = null
     var currentChannel: AudioChannel? = null
     var afkMode = true
     var afkTime = 10.seconds.inWholeMilliseconds
+    val trackQueue = mutableListOf<AudioTrack>()
 
     init {
         val file = File("$PATH/${guild.id}/app.json")
         if (file.exists()) {
-            val info = Json.decodeFromString<ApplicationInfo>(Scanner(file).nextLine())
+            val info = Json.decodeFromString<ServerInfo>(Scanner(file).nextLine())
             if (info.defaultChannelId.isNotEmpty()) {
                 defaultChannel = guild.getVoiceChannelById(info.defaultChannelId)
             }
             afkMode = info.afkMode
             afkTime = info.afkTime
+            info.addressQueue.forEach { address ->
+                playerManager.loadItem(
+                    address,
+                    object : AudioLoader() {
+                        override fun trackLoaded(track: AudioTrack) {
+                            trackQueue.add(track)
+                        }
+
+                        override fun playlistLoaded(playlist: AudioPlaylist) {
+                            playlist.tracks.forEach { track ->
+                                trackQueue.add(track)
+                            }
+                        }
+
+                        override fun loadFailed(exception: FriendlyException) {
+                            exception.notifyInDiscord(guild, developer)
+                        }
+                    },
+                )
+            }
         }
     }
 
@@ -101,13 +142,15 @@ class Application(guild: Guild, private val developer: User) {
         val path = "$PATH/$id"
         touchDirectory(path)
         val file = FileWriter("$path/app.json")
-        val string = Json.encodeToString(ApplicationInfo(defaultChannel?.id ?: "", afkMode, afkTime))
+        val addressQueue = mutableListOf<String>()
+        trackQueue.forEach { track -> addressQueue.add(track.info.uri) }
+        val string = Json.encodeToString(ServerInfo(defaultChannel?.id ?: "", afkMode, afkTime, addressQueue))
         file.write(string)
         file.close()
     }
 
     fun connect(guild: Guild, channel: AudioChannel?): String {
-        if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord(developer)
+        if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord(guild, developer)
         cancelExitJob()
         if (channel == currentChannel) return COMMAND_CONNECT_REPLY_PROBLEM_ALREADY
         guild.audioManager.openAudioConnection(channel)
@@ -145,9 +188,9 @@ class Application(guild: Guild, private val developer: User) {
     }
 }
 
-fun Exception.notifyInDiscord(developer: User): Exception {
+fun Exception.notifyInDiscord(guild: Guild?, developer: User): Exception {
     developer.openPrivateChannel().queue { channel ->
-        channel.sendMessage("Oups! Something went wrong! Message: $message").queue()
+        channel.sendMessage("Oups! Something went wrong! Guild Name: ${guild?.name} Message: $message").queue()
     }
     return this
 }
