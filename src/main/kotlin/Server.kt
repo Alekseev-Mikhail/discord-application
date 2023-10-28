@@ -33,10 +33,10 @@ val PROPERTIES = Properties().apply { load(InputStreamReader(FileInputStream("$P
 val DEVELOPER_ID = getProperty("app.developer")
 val TOKEN = getProperty("app.token")
 
-val COMMAND_OPTION_CHANNEL_NAME = getProperty("command.option.channel.name")
-val COMMAND_OPTION_VALUE_NAME = getProperty("command.option.value.name")
-val COMMAND_OPTION_TIME_NAME = getProperty("command.option.time.name")
-val COMMAND_OPTION_ADDRESS_NAME = getProperty("command.option.address.name")
+const val COMMAND_OPTION_CHANNEL_NAME = "channel"
+const val COMMAND_OPTION_VALUE_NAME = "value"
+const val COMMAND_OPTION_TIME_NAME = "time"
+const val COMMAND_OPTION_ADDRESS_NAME = "address"
 
 val COMMAND_OPTION_CHANNEL_DESCRIPTION = getProperty("command.option.channel.description")
 val COMMAND_OPTION_VALUE_DESCRIPTION = getProperty("command.option.value.description")
