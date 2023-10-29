@@ -149,7 +149,7 @@ class SlashCommandHandler(
     private fun queue(event: SlashCommandInteractionEvent) {
         val guild = getGuild(event)
         val server = getServer(event)
-        val option = getOption(event, COMMAND_OPTION_ADDRESS_NAME).asString
+        val option = getOption(event, COMMAND_OPTION_ADDRESS_NAME).asString.replace(" ", "")
 
         playerManager.loadItem(
             option,
@@ -200,10 +200,10 @@ class SlashCommandHandler(
         }
         if (option != null) {
             playerManager.loadItem(
-                option.asString,
+                option.asString.replace(" ", ""),
                 object : AudioLoadResultHandler {
                     override fun trackLoaded(track: AudioTrack) {
-                        server.trackQueue.add(track)
+                        server.trackQueue.add(0, track)
                         if (connectAndPlay(event, guild, server)) {
                             reply(event, COMMAND_PLAY_REPLY_TRACK)
                             return
@@ -212,8 +212,8 @@ class SlashCommandHandler(
                     }
 
                     override fun playlistLoaded(playlist: AudioPlaylist) {
-                        playlist.tracks.forEach { track ->
-                            server.trackQueue.add(track)
+                        playlist.tracks.forEachIndexed { index, track ->
+                            server.trackQueue.add(index, track)
                         }
                         if (connectAndPlay(event, guild, server)) {
                             reply(event, COMMAND_PLAY_REPLY_PLAYLIST)
