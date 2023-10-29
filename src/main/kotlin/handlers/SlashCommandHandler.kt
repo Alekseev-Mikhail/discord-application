@@ -7,6 +7,8 @@ import COMMAND_AFK_TIME_NAME
 import COMMAND_AFK_TIME_REPLY
 import COMMAND_CHECK_NAME
 import COMMAND_CHECK_REPLY
+import COMMAND_CLEAR_NAME
+import COMMAND_CLEAR_REPLY
 import COMMAND_CONNECT_NAME
 import COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT
 import COMMAND_CONNECT_REPLY_PROBLEM_TYPE
@@ -23,6 +25,15 @@ import COMMAND_OPTION_ADDRESS_NAME
 import COMMAND_OPTION_CHANNEL_NAME
 import COMMAND_OPTION_TIME_NAME
 import COMMAND_OPTION_VALUE_NAME
+import COMMAND_PLAY_NAME
+import COMMAND_PLAY_REPLY
+import COMMAND_PLAY_REPLY_PLAYLIST
+import COMMAND_PLAY_REPLY_PROBLEM_ALREADY
+import COMMAND_PLAY_REPLY_PROBLEM_FAILED
+import COMMAND_PLAY_REPLY_PROBLEM_FOUND
+import COMMAND_PLAY_REPLY_PROBLEM_MEMBEROUT
+import COMMAND_PLAY_REPLY_PROBLEM_NOTHING
+import COMMAND_PLAY_REPLY_TRACK
 import COMMAND_QUEUE_NAME
 import COMMAND_QUEUE_REPLY_PLAYLIST
 import COMMAND_QUEUE_REPLY_PROBLEM_FAILED
@@ -67,6 +78,8 @@ class SlashCommandHandler(
             COMMAND_DEFCHANNEL_NAME -> reply(event, defChannel(event))
             COMMAND_QUEUE_NAME -> queue(event)
             COMMAND_CHECK_NAME -> reply(event, check(event))
+            COMMAND_CLEAR_NAME -> reply(event, clear(event))
+            COMMAND_PLAY_NAME -> play(event)
             COMMAND_AFK_TIME_NAME -> reply(event, afkTime(event))
             COMMAND_AFK_MODE_NAME -> reply(event, afkMode(event))
         }
@@ -91,18 +104,18 @@ class SlashCommandHandler(
         if (option != null) {
             val channel = option.asChannel
             if (channel.type.isAudio) {
-                return server.connect(guild, channel.asAudioChannel())
+                return server.connect(channel.asAudioChannel())
             }
             return COMMAND_CONNECT_REPLY_PROBLEM_TYPE
         }
 
         if (server.defaultChannel != null) {
-            return server.connect(guild, server.defaultChannel)
+            return server.connect(server.defaultChannel)
         }
 
         val channel = getMemberChannel(event)
         if (channel != null) {
-            return server.connect(guild, channel)
+            return server.connect(channel)
         }
         return COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT
     }
@@ -111,7 +124,7 @@ class SlashCommandHandler(
         val guild = getGuild(event)
         val server = getServer(guild)
         if (guild.audioManager.isConnected) {
-            server.disconnect(guild)
+            server.disconnect()
             return COMMAND_DISCONNECT_REPLY
         }
         return COMMAND_DISCONNECT_PROBLEM
@@ -166,7 +179,81 @@ class SlashCommandHandler(
     }
 
     private fun check(event: SlashCommandInteractionEvent): String =
-        getServer(event).trackQueue.joinToString(separator = "\n") { "${it.info.title}: ${it.info.uri}" }.ifBlank { COMMAND_CHECK_REPLY }
+        getServer(event).trackQueue.joinToString(separator = "\n") { "${it.info.title}: ${it.info.uri}" }
+            .ifBlank { COMMAND_CHECK_REPLY }
+
+    private fun clear(event: SlashCommandInteractionEvent): String {
+        val server = getServer(event)
+        server.player.stopTrack()
+        server.trackQueue.clear()
+        return COMMAND_CLEAR_REPLY
+    }
+
+    private fun play(event: SlashCommandInteractionEvent) {
+        val guild = getGuild(event)
+        val server = getServer(guild)
+        val option = event.getOption(COMMAND_OPTION_ADDRESS_NAME)
+
+        if (server.player.playingTrack != null) {
+            reply(event, COMMAND_PLAY_REPLY_PROBLEM_ALREADY)
+            return
+        }
+        if (option != null) {
+            playerManager.loadItem(
+                option.asString,
+                object : AudioLoadResultHandler {
+                    override fun trackLoaded(track: AudioTrack) {
+                        server.trackQueue.add(track)
+                        if (connectAndPlay(event, guild, server)) {
+                            reply(event, COMMAND_PLAY_REPLY_TRACK)
+                            return
+                        }
+                        reply(event, COMMAND_PLAY_REPLY_PROBLEM_MEMBEROUT)
+                    }
+
+                    override fun playlistLoaded(playlist: AudioPlaylist) {
+                        playlist.tracks.forEach { track ->
+                            server.trackQueue.add(track)
+                        }
+                        if (connectAndPlay(event, guild, server)) {
+                            reply(event, COMMAND_PLAY_REPLY_PLAYLIST)
+                            return
+                        }
+                        reply(event, COMMAND_PLAY_REPLY_PROBLEM_MEMBEROUT)
+                    }
+
+                    override fun noMatches() {
+                        reply(event, COMMAND_PLAY_REPLY_PROBLEM_FOUND)
+                    }
+
+                    override fun loadFailed(throwable: FriendlyException) {
+                        throwable.notifyInDiscord(guild, developer)
+                        reply(event, "$COMMAND_PLAY_REPLY_PROBLEM_FAILED: ${throwable.message}")
+                    }
+                },
+            )
+        } else {
+            if (server.trackQueue.isEmpty()) {
+                reply(event, COMMAND_PLAY_REPLY_PROBLEM_NOTHING)
+                return
+            }
+            if (connectAndPlay(event, guild, server)) {
+                reply(event, COMMAND_PLAY_REPLY)
+                return
+            }
+            reply(event, COMMAND_PLAY_REPLY_PROBLEM_MEMBEROUT)
+        }
+    }
+
+    private fun connectAndPlay(event: SlashCommandInteractionEvent, guild: Guild, server: Server): Boolean {
+        if (server.currentChannel == null) {
+            val channel = getMemberChannel(event) ?: return false
+            server.connect(channel)
+        }
+        guild.audioManager.sendingHandler = AudioPlayerSendHandler(server.player)
+        server.player.playTrack(server.trackQueue.first().makeClone())
+        return true
+    }
 
     private fun afkTime(event: SlashCommandInteractionEvent): String {
         val server = getServer(event)
@@ -184,7 +271,7 @@ class SlashCommandHandler(
             return when (option.asBoolean) {
                 true -> {
                     server.afkMode = true
-                    server.afkMode(guild)
+                    server.afkMode()
                     COMMAND_AFK_MODE_REPLY_ENABLE
                 }
 
@@ -203,7 +290,7 @@ class SlashCommandHandler(
 
             false -> {
                 server.afkMode = true
-                server.afkMode(guild)
+                server.afkMode()
                 COMMAND_AFK_MODE_REPLY_ENABLE
             }
         }
@@ -232,30 +319,6 @@ class SlashCommandHandler(
 //
 //
 //
-//    private fun play(event: SlashCommandInteractionEvent): String {
-//        val guild = event.guild!!
-//        addServer(guild)
-//        val playerState = playerState[guild]!!
-//        if (!playerState.playing) {
-//            val option = event.getOption("address")
-//            val trackQueue = trackQueue[guild]!!
-//            if (option != null) {
-//                connect(event)
-//                queue(event, option.asString, false)
-//                return "Музыка играет!"
-//            } else if (trackQueue.isNotEmpty()) {
-//                connect(event)
-//                event.guild!!.audioManager.sendingHandler = handlers.AudioPlayerSendHandler(players[guild]!!)
-//                players[guild]!!.playTrack(trackQueue[0])
-//                this.playerState[guild]!!.playing = true
-//                return "Музыка играет!"
-//            } else {
-//                return "В очереди нету музыки."
-//            }
-//        } else {
-//            return "Музыка уже играет."
-//        }
-//    }
 //
 //    private fun pause(event: SlashCommandInteractionEvent): String {
 //        val guild = event.guild!!
@@ -326,23 +389,6 @@ class SlashCommandHandler(
 //            "Очередь пуста."
 //        }
 //    }
-//
-//    private fun clear(event: SlashCommandInteractionEvent): String {
-//        val guild = event.guild!!
-//        addServer(guild)
-//        val playerState = playerState[guild]!!
-//        val trackQueue = trackQueue[guild]!!
-//        val addressQueue = addressQueue[guild]!!
-//        if (playerState.playing) {
-//            val player = players[guild]!!
-//            player.stopTrack()
-//            playerState.playing = false
-//        }
-//        trackQueue.clear()
-//        addressQueue.clear()
-//        return "Очередь очищена."
-//    }
-//
 
     private fun reply(event: SlashCommandInteractionEvent, message: String) =
         event.reply(message).setEphemeral(true).queue()

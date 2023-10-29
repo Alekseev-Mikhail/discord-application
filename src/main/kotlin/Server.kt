@@ -1,8 +1,10 @@
-
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import handlers.AudioLoader
 import handlers.SlashCommandHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -87,6 +89,21 @@ const val COMMAND_CHECK_NAME = "check"
 val COMMAND_CHECK_DESCRIPTION = getProperty("command.check.description")
 val COMMAND_CHECK_REPLY = getProperty("command.check.reply")
 
+const val COMMAND_CLEAR_NAME = "clear"
+val COMMAND_CLEAR_DESCRIPTION = getProperty("command.clear.description")
+val COMMAND_CLEAR_REPLY = getProperty("command.clear.reply")
+
+const val COMMAND_PLAY_NAME = "play"
+val COMMAND_PLAY_DESCRIPTION = getProperty("command.play.description")
+val COMMAND_PLAY_REPLY = getProperty("command.play.reply")
+val COMMAND_PLAY_REPLY_TRACK = getProperty("command.play.reply.track")
+val COMMAND_PLAY_REPLY_PLAYLIST = getProperty("command.play.reply.playlist")
+val COMMAND_PLAY_REPLY_PROBLEM_NOTHING = getProperty("command.play.reply.problem.nothing")
+val COMMAND_PLAY_REPLY_PROBLEM_ALREADY = getProperty("command.play.reply.problem.already")
+val COMMAND_PLAY_REPLY_PROBLEM_FOUND = getProperty("command.play.reply.problem.found")
+val COMMAND_PLAY_REPLY_PROBLEM_FAILED = getProperty("command.play.reply.problem.failed")
+val COMMAND_PLAY_REPLY_PROBLEM_MEMBEROUT = getProperty("command.play.reply.problem.memberout")
+
 const val COMMAND_AFK_TIME_NAME = "afk-time"
 val COMMAND_AFK_TIME_DESCRIPTION = getProperty("command.afk.time.description")
 val COMMAND_AFK_TIME_REPLY = getProperty("command.afk.time.reply")
@@ -96,9 +113,20 @@ val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
 val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
 val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")
 
-class Server(guild: Guild, playerManager: DefaultAudioPlayerManager, private val developer: User) {
-    private val player = playerManager.createPlayer()
+class Server(playerManager: DefaultAudioPlayerManager, private val guild: Guild, private val developer: User) {
     private var exitJob: Job? = null
+    val player: AudioPlayer = playerManager.createPlayer().apply {
+        addListener(
+            object : AudioEventAdapter() {
+                override fun onTrackEnd(player: AudioPlayer, track: AudioTrack, endReason: AudioTrackEndReason) {
+                    if (endReason.mayStartNext) {
+                        trackQueue.removeFirst()
+                        player.playTrack(trackQueue.first())
+                    }
+                }
+            },
+        )
+    }
 
     var defaultChannel: AudioChannel? = null
     var currentChannel: AudioChannel? = null
@@ -149,17 +177,19 @@ class Server(guild: Guild, playerManager: DefaultAudioPlayerManager, private val
         file.close()
     }
 
-    fun connect(guild: Guild, channel: AudioChannel?): String {
+    fun connect(channel: AudioChannel?): String {
         if (channel == null) throw NullPointerException("Channel cannot be null").notifyInDiscord(guild, developer)
         cancelExitJob()
         if (channel == currentChannel) return COMMAND_CONNECT_REPLY_PROBLEM_ALREADY
+        player.stopTrack()
         guild.audioManager.openAudioConnection(channel)
         currentChannel = channel
         return COMMAND_CONNECT_REPLY
     }
 
-    fun disconnect(guild: Guild) {
+    fun disconnect() {
         cancelExitJob()
+        player.stopTrack()
         guild.audioManager.closeAudioConnection()
         currentChannel = null
     }
@@ -170,11 +200,11 @@ class Server(guild: Guild, playerManager: DefaultAudioPlayerManager, private val
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun afkMode(guild: Guild) {
+    fun afkMode() {
         exitJob = GlobalScope.launch {
             coroutineScope {
                 delay(afkTime)
-                if (afkMode && isAlone()) disconnect(guild)
+                if (afkMode && isAlone()) disconnect()
             }
         }
     }

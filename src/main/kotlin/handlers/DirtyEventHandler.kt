@@ -17,14 +17,14 @@ class DirtyEventHandler(
     private val developer: User,
 ) : ListenerAdapter() {
     override fun onReady(event: ReadyEvent) {
-        event.jda.guilds.forEach { guild -> servers[guild.id] = Server(guild, playerManager, developer) }
+        event.jda.guilds.forEach { guild -> servers[guild.id] = Server(playerManager, guild, developer) }
         Runtime.getRuntime()
-            .addShutdownHook(Thread { servers.forEach { (guildId, application) -> application.save(guildId) } })
+            .addShutdownHook(Thread { servers.forEach { (guildId, server) -> server.save(guildId) } })
     }
 
     override fun onGuildJoin(event: GuildJoinEvent) {
         if (!servers.containsKey(event.guild.id)) {
-            servers[event.guild.id] = Server(event.guild, playerManager, developer)
+            servers[event.guild.id] = Server(playerManager, event.guild, developer)
         }
     }
 
@@ -48,7 +48,7 @@ class DirtyEventHandler(
         val application = servers[event.guild.id]
             ?: throw NullPointerException("Audio channel was updated in an unknown guild").notifyInDiscord(event.guild, developer)
         if (application.afkMode && application.isAlone()) {
-            application.afkMode(event.guild)
+            application.afkMode()
         }
     }
 }
