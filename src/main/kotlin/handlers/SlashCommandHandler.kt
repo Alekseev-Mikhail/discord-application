@@ -295,31 +295,6 @@ class SlashCommandHandler(
             }
         }
     }
-//
-//    fun debug() {
-//        for (logger in LoggerFactory.getILoggerFactory()) {
-//            val index = logger.iteratorForAppenders()
-//            while (index.hasNext()) {
-//                val appender = index.next()
-//            }
-//        }
-//        val guild = event.guild!!
-//        val message = StringBuilder(":/")
-//        addServer(guild)
-//        trackQueue[guild]!!.forEach { e -> message.append(' ').append(e) }
-//        message.append(", Playing: " + playerState[guild]!!.playing)
-//        message.append(", Repeat: " + playerState[guild]!!.repeat)
-//        message.append(", AddressQueuesSize: " + addressQueue.size)
-//        message.append(", TrackQueuesSize: " + trackQueue.size)
-//        message.append(", PlayerStatesSize: " + playerState.size)
-//        message.append(", PlayersSize: " + players.size)
-//        message.append(", ServersSize: " + servers.size)
-//        return message.toString()
-//    }
-//
-//
-//
-//
 //    private fun pause(event: SlashCommandInteractionEvent): String {
 //        val guild = event.guild!!
 //        addServer(guild)

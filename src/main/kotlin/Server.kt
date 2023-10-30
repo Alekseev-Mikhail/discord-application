@@ -5,7 +5,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
-import handlers.AudioLoader
+import handlers.AudioLoadResultAdapter
 import handlers.SlashCommandHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -146,7 +146,7 @@ class Server(playerManager: DefaultAudioPlayerManager, private val guild: Guild,
             info.addressQueue.forEach { address ->
                 playerManager.loadItem(
                     address,
-                    object : AudioLoader() {
+                    object : AudioLoadResultAdapter() {
                         override fun trackLoaded(track: AudioTrack) {
                             trackQueue.add(track)
                         }
