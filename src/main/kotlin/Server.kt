@@ -5,8 +5,8 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
-import handlers.AudioLoadResultAdapter
-import handlers.SlashCommandHandler
+import handler.AudioLoadResultAdapter
+import handler.SlashCommandHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -32,6 +32,7 @@ private const val DEV_PATH = "src/main/resources"
 const val PATH = DEV_PATH
 val PROPERTIES = Properties().apply { load(InputStreamReader(FileInputStream("$PATH/app.properties"), "UTF-8")) }
 
+val VERSION: String? = Server::class.java.`package`.implementationVersion
 val DEVELOPER_ID = getProperty("app.developer")
 val TOKEN = getProperty("app.token")
 
@@ -52,6 +53,7 @@ val COMMAND_INSTRUCTION_REPLY = getProperty("command.instruction.reply")
 const val COMMAND_STATE_NAME = "state"
 val COMMAND_STATE_DESCRIPTION = getProperty("command.state.description")
 val COMMAND_STATE_TITLE = getProperty("command.state.title")
+val COMMAND_STATE_VERSION = getProperty("command.state.version")
 val COMMAND_STATE_CHANNEL_DEFAULT = getProperty("command.state.channel.default")
 val COMMAND_STATE_CHANNEL_CURRENT = getProperty("command.state.channel.current")
 val COMMAND_STATE_AFK_MODE = getProperty("command.state.afk.mode")

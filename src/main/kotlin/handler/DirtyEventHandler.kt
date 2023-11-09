@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import Server
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager

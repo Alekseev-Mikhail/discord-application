@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame

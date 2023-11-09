@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import COMMAND_AFK_MODE_NAME
 import COMMAND_AFK_MODE_REPLY_DISABLE
@@ -48,7 +48,9 @@ import COMMAND_STATE_TITLE
 import COMMAND_STATE_VALUE_DISABLE
 import COMMAND_STATE_VALUE_ENABLE
 import COMMAND_STATE_VALUE_NULL
+import COMMAND_STATE_VERSION
 import Server
+import VERSION
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
@@ -89,6 +91,7 @@ class SlashCommandHandler(
         val server = getServer(event)
         val message = StringBuilder()
         message.append("$COMMAND_STATE_TITLE\n")
+        message.append("$COMMAND_STATE_VERSION: $VERSION \n")
         message.append("$COMMAND_STATE_CHANNEL_CURRENT: ${server.currentChannel?.name ?: COMMAND_STATE_VALUE_NULL}\n")
         message.append("$COMMAND_STATE_CHANNEL_DEFAULT: ${server.defaultChannel?.name ?: COMMAND_STATE_VALUE_NULL}\n")
         message.append("$COMMAND_STATE_AFK_MODE: ${if (server.afkMode) COMMAND_STATE_VALUE_ENABLE else COMMAND_STATE_VALUE_DISABLE}\n")

@@ -1,7 +1,7 @@
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
-import handlers.DirtyEventHandler
-import handlers.SlashCommandHandler
+import handler.DirtyEventHandler
+import handler.SlashCommandHandler
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.Permission.ADMINISTRATOR
 import net.dv8tion.jda.api.entities.Activity.listening
