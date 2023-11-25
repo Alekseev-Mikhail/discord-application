@@ -46,11 +46,16 @@ val COMMAND_OPTION_VALUE_DESCRIPTION = getProperty("command.option.value.descrip
 val COMMAND_OPTION_TIME_DESCRIPTION = getProperty("command.option.time.description")
 val COMMAND_OPTION_ADDRESS_DESCRIPTION = getProperty("command.option.address.description")
 
-const val COMMAND_INSTRUCTION_NAME = "instruction"
+const val COMMAND_GROUP_INFO = "info"
+const val COMMAND_GROUP_CHANNEL = "channel"
+const val COMMAND_GROUP_MUSIC = "music"
+const val COMMAND_GROUP_ADMIN = "admin"
+
+const val COMMAND_INSTRUCTION_NAME = "$COMMAND_GROUP_INFO-instruction"
 val COMMAND_INSTRUCTION_DESCRIPTION = getProperty("command.instruction.description")
 val COMMAND_INSTRUCTION_REPLY = getProperty("command.instruction.reply")
 
-const val COMMAND_STATE_NAME = "state"
+const val COMMAND_STATE_NAME = "$COMMAND_GROUP_INFO-state"
 val COMMAND_STATE_DESCRIPTION = getProperty("command.state.description")
 val COMMAND_STATE_TITLE = getProperty("command.state.title")
 val COMMAND_STATE_VERSION = getProperty("command.state.version")
@@ -62,40 +67,40 @@ val COMMAND_STATE_VALUE_NULL = getProperty("command.state.value.null")
 val COMMAND_STATE_VALUE_ENABLE = getProperty("command.state.value.enable")
 val COMMAND_STATE_VALUE_DISABLE = getProperty("command.state.value.disable")
 
-const val COMMAND_CONNECT_NAME = "connect"
+const val COMMAND_CONNECT_NAME = "$COMMAND_GROUP_CHANNEL-connect"
 val COMMAND_CONNECT_DESCRIPTION = getProperty("command.connect.description")
 val COMMAND_CONNECT_REPLY = getProperty("command.connect.reply")
 val COMMAND_CONNECT_REPLY_PROBLEM_ALREADY = getProperty("command.connect.reply.problem.already")
 val COMMAND_CONNECT_REPLY_PROBLEM_MEMBEROUT = getProperty("command.connect.reply.problem.memberout")
 val COMMAND_CONNECT_REPLY_PROBLEM_TYPE = getProperty("command.connect.reply.problem.type")
 
-const val COMMAND_DISCONNECT_NAME = "disconnect"
+const val COMMAND_DISCONNECT_NAME = "$COMMAND_GROUP_CHANNEL-disconnect"
 val COMMAND_DISCONNECT_DESCRIPTION = getProperty("command.disconnect.description")
 val COMMAND_DISCONNECT_REPLY = getProperty("command.disconnect.reply")
 val COMMAND_DISCONNECT_PROBLEM = getProperty("command.disconnect.reply.problem")
 
-const val COMMAND_DEFCHANNEL_NAME = "def-channel"
+const val COMMAND_DEFCHANNEL_NAME = "$COMMAND_GROUP_CHANNEL-def-channel"
 val COMMAND_DEFCHANNEL_DESCRIPTION = getProperty("command.defchannel.description")
 val COMMAND_DEFCHANNEL_REPLY_ENABLE = getProperty("command.defchannel.reply.enable")
 val COMMAND_DEFCHANNEL_REPLY_DISABLE = getProperty("command.defchannel.reply.disable")
 val COMMAND_DEFCHANNEL_REPLY_PROBLEM_TYPE = getProperty("command.defchannel.reply.problem.type")
 
-const val COMMAND_QUEUE_NAME = "queue"
+const val COMMAND_QUEUE_NAME = "$COMMAND_GROUP_MUSIC-queue"
 val COMMAND_QUEUE_DESCRIPTION = getProperty("command.queue.description")
 val COMMAND_QUEUE_REPLY_TRACK = getProperty("command.queue.reply.track")
 val COMMAND_QUEUE_REPLY_PLAYLIST = getProperty("command.queue.reply.playlist")
 val COMMAND_QUEUE_REPLY_PROBLEM_FOUND = getProperty("command.queue.reply.problem.found")
 val COMMAND_QUEUE_REPLY_PROBLEM_FAILED = getProperty("command.queue.reply.problem.failed")
 
-const val COMMAND_CHECK_NAME = "check"
+const val COMMAND_CHECK_NAME = "$COMMAND_GROUP_MUSIC-check"
 val COMMAND_CHECK_DESCRIPTION = getProperty("command.check.description")
 val COMMAND_CHECK_REPLY = getProperty("command.check.reply")
 
-const val COMMAND_CLEAR_NAME = "clear"
+const val COMMAND_CLEAR_NAME = "$COMMAND_GROUP_MUSIC-clear"
 val COMMAND_CLEAR_DESCRIPTION = getProperty("command.clear.description")
 val COMMAND_CLEAR_REPLY = getProperty("command.clear.reply")
 
-const val COMMAND_PLAY_NAME = "play"
+const val COMMAND_PLAY_NAME = "$COMMAND_GROUP_MUSIC-play"
 val COMMAND_PLAY_DESCRIPTION = getProperty("command.play.description")
 val COMMAND_PLAY_REPLY = getProperty("command.play.reply")
 val COMMAND_PLAY_REPLY_TRACK = getProperty("command.play.reply.track")
@@ -106,11 +111,11 @@ val COMMAND_PLAY_REPLY_PROBLEM_FOUND = getProperty("command.play.reply.problem.f
 val COMMAND_PLAY_REPLY_PROBLEM_FAILED = getProperty("command.play.reply.problem.failed")
 val COMMAND_PLAY_REPLY_PROBLEM_MEMBEROUT = getProperty("command.play.reply.problem.memberout")
 
-const val COMMAND_AFK_TIME_NAME = "afk-time"
+const val COMMAND_AFK_TIME_NAME = "$COMMAND_GROUP_ADMIN-afk-time"
 val COMMAND_AFK_TIME_DESCRIPTION = getProperty("command.afk.time.description")
 val COMMAND_AFK_TIME_REPLY = getProperty("command.afk.time.reply")
 
-const val COMMAND_AFK_MODE_NAME = "afk-mode"
+const val COMMAND_AFK_MODE_NAME = "$COMMAND_GROUP_ADMIN-afk-mode"
 val COMMAND_AFK_MODE_DESCRIPTION = getProperty("command.afk.mode.description")
 val COMMAND_AFK_MODE_REPLY_ENABLE = getProperty("command.afk.mode.reply.enable")
 val COMMAND_AFK_MODE_REPLY_DISABLE = getProperty("command.afk.mode.reply.disable")
@@ -139,8 +144,9 @@ class Server(playerManager: DefaultAudioPlayerManager, private val guild: Guild,
     init {
         val file = File("$PATH/${guild.id}/app.json")
         if (file.exists()) {
-            val info = Json.decodeFromString<ServerInfo>(Scanner(file).nextLine())
-            if (info.defaultChannelId.isNotEmpty()) {
+            val json = Json { ignoreUnknownKeys = true }
+            val info = json.decodeFromString<ServerInfo>(Scanner(file).nextLine())
+            if (!info.defaultChannelId.isNullOrEmpty()) {
                 defaultChannel = guild.getVoiceChannelById(info.defaultChannelId)
             }
             afkMode = info.afkMode

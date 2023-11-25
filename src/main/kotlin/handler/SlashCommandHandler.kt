@@ -62,7 +62,6 @@ import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import notifyInDiscord
-import java.lang.StringBuilder
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 

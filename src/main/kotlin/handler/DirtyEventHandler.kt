@@ -34,7 +34,10 @@ class DirtyEventHandler(
 
     override fun onChannelDelete(event: ChannelDeleteEvent) {
         val application = servers[event.guild.id]
-            ?: throw NullPointerException("Channel was deleted in an unknown guild").notifyInDiscord(event.guild, developer)
+            ?: throw NullPointerException("Channel was deleted in an unknown guild").notifyInDiscord(
+                event.guild,
+                developer,
+            )
         val deletedChannel = event.channel
         if (application.defaultChannel == deletedChannel) {
             application.defaultChannel = null
@@ -46,7 +49,10 @@ class DirtyEventHandler(
 
     override fun onGuildVoiceUpdate(event: GuildVoiceUpdateEvent) {
         val application = servers[event.guild.id]
-            ?: throw NullPointerException("Audio channel was updated in an unknown guild").notifyInDiscord(event.guild, developer)
+            ?: throw NullPointerException("Audio channel was updated in an unknown guild").notifyInDiscord(
+                event.guild,
+                developer,
+            )
         if (application.afkMode && application.isAlone()) {
             application.afkMode()
         }
